@@ -25,5 +25,8 @@
     "@jazzer.js/core": "^2.1.0",
     "@types/bun": "latest",
     "typescript": "^5"
-  }
+  },
+  "trustedDependencies": [
+    "@jazzer.js/fuzzer"
+  ]
 }
