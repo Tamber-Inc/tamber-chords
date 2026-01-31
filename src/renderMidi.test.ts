@@ -767,6 +767,7 @@ describe("edge cases", () => {
       { baseOctave: 4, maxVoices: 3 }
     );
     expect(result).toHaveLength(1);
+    expect(result[0].notes).toHaveLength(4); // 1 bass + 3 upper
   });
 
   test("diminished chord with double flats renders correctly", () => {
@@ -775,8 +776,9 @@ describe("edge cases", () => {
       { baseOctave: 4 }
     );
 
-    expect(result[0].voices).toHaveLength(4);
-    expect(result[0].voices.every((n) => n >= 0 && n <= 127)).toBe(true);
+    // 1 bass + 4 chord tones = 5 notes
+    expect(result[0].notes).toHaveLength(5);
+    expect(result[0].notes.every((n) => n >= 0 && n <= 127)).toBe(true);
   });
 
   test("extreme octaves", () => {
@@ -784,13 +786,15 @@ describe("edge cases", () => {
       [{ root: Note.C, quality: "maj" }],
       { baseOctave: 1 }
     );
-    expect(low[0].voices[0]).toBe(24); // C1
+    // Bass at C0, upper voices start at C1
+    expect(low[0].notes[0]).toBe(12); // C0 bass
+    expect(low[0].notes[1]).toBe(24); // C1 root
 
     const high = renderChordSequence(
       [{ root: Note.C, quality: "maj" }],
       { baseOctave: 7 }
     );
-    expect(high[0].voices[0]).toBe(96); // C7
+    expect(high[0].notes[1]).toBe(96); // C7 root
   });
 
   test("maxVoices greater than chord tones: doubles notes", () => {
@@ -799,9 +803,10 @@ describe("edge cases", () => {
       { baseOctave: 4, maxVoices: 4 }
     );
 
-    expect(result[0].voices).toHaveLength(4);
-    // One tone should be doubled (likely root)
-    const pitchClasses = result[0].voices.map((n) => n % 12);
+    // 1 bass + 4 upper = 5 notes
+    expect(result[0].notes).toHaveLength(5);
+    // One tone should be doubled
+    const pitchClasses = result[0].notes.map((n) => n % 12);
     const uniquePitchClasses = new Set(pitchClasses);
     expect(uniquePitchClasses.size).toBe(3); // Still 3 unique pitch classes
   });
