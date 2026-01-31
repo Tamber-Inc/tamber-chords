@@ -58,7 +58,14 @@ const INTERVAL_LETTER_OFFSET: Record<number, number> = {
 function getIntervalLetter(rootLetter: Letter, intervalDegree: number): Letter {
   const rootIndex = LETTERS.indexOf(rootLetter);
   const offset = INTERVAL_LETTER_OFFSET[intervalDegree];
-  return LETTERS[(rootIndex + offset) % 7];
+  if (offset === undefined) {
+    throw new Error(`Unknown interval degree: ${intervalDegree}`);
+  }
+  const letter = LETTERS[(rootIndex + offset) % 7];
+  if (letter === undefined) {
+    throw new Error(`Invalid letter index calculation`);
+  }
+  return letter;
 }
 
 /**
@@ -71,6 +78,9 @@ function calculateTone(
 ): NoteName {
   const targetLetter = getIntervalLetter(root.letter, intervalDegree);
   const baseSemitones = BASE_INTERVAL_SEMITONES[intervalDegree];
+  if (baseSemitones === undefined) {
+    throw new Error(`Unknown interval degree: ${intervalDegree}`);
+  }
   const targetSemitonesFromRoot = baseSemitones + intervalAccidental;
 
   // Calculate actual pitch class we're aiming for
