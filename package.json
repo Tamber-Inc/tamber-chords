@@ -21,10 +21,7 @@
     "build:fuzz": "bun build ./src/index.ts --outdir ./dist-fuzz --target node --format cjs",
     "test": "bun test",
     "prepublishOnly": "bun run build",
-    "fuzz": "bun run build:fuzz && npx jazzer",
-    "fuzz:parseChord": "bun run build:fuzz && npx jazzer fuzz/parseChord.fuzz.cjs",
-    "fuzz:buildChord": "bun run build:fuzz && npx jazzer fuzz/buildChord.fuzz.cjs",
-    "fuzz:chordPalette": "bun run build:fuzz && npx jazzer fuzz/chordPalette.fuzz.cjs"
+    "fuzz": "bun run build:fuzz && npx jazzer fuzz/parseChord.fuzz.cjs && npx jazzer fuzz/buildChord.fuzz.cjs && npx jazzer fuzz/chordPalette.fuzz.cjs"
   },
   "devDependencies": {
     "@jazzer.js/core": "^2.1.0",

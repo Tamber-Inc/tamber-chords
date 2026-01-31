@@ -326,16 +326,23 @@ function findOptimalAssignment(
   previousVoices: number[],
   targetPitchClasses: number[],
   minNote: number,
-  maxNote: number
+  maxNote: number,
+  anchorCenter?: number
 ): number[] {
   // For each previous voice, find the closest target pitch class
   // Use a greedy assignment that minimizes total movement
   // IMPORTANT: Ensure no duplicate MIDI values in output
+  // When costs are equal, prefer notes closer to anchorCenter to prevent drift
 
   const numVoices = previousVoices.length;
   const assignments: number[] = new Array(numVoices).fill(-1);
   const usedTargets = new Set<number>();
   const usedMidiNotes = new Set<number>();
+
+  // Calculate anchor center from previous voices if not provided
+  const center =
+    anchorCenter ??
+    previousVoices.reduce((a, b) => a + b, 0) / previousVoices.length;
 
   // Generate all possible target notes (all octaves in range) for each pitch class
   function getCandidates(pc: number): number[] {
@@ -349,7 +356,13 @@ function findOptimalAssignment(
   }
 
   // For each voice, find the best target
-  type Move = { voiceIdx: number; targetIdx: number; midi: number; cost: number };
+  type Move = {
+    voiceIdx: number;
+    targetIdx: number;
+    midi: number;
+    cost: number;
+    drift: number;
+  };
   const allMoves: Move[] = [];
 
   for (let v = 0; v < numVoices; v++) {
@@ -362,13 +375,17 @@ function findOptimalAssignment(
           targetIdx: t,
           midi,
           cost: Math.abs(midi - prevNote),
+          drift: Math.abs(midi - center), // Distance from center for tiebreaking
         });
       }
     }
   }
 
-  // Sort by cost
-  allMoves.sort((a, b) => a.cost - b.cost);
+  // Sort by cost, then by drift (prefer notes closer to center when costs are equal)
+  allMoves.sort((a, b) => {
+    if (a.cost !== b.cost) return a.cost - b.cost;
+    return a.drift - b.drift;
+  });
 
   // Greedy assignment - ensure unique MIDI notes
   const assignedVoices = new Set<number>();
@@ -480,6 +497,7 @@ export function voiceLead(
   const results: MidiChord[] = [];
   let previousVoices: number[] | null = null;
   let previousBass: number | null = null;
+  let anchorCenter: number | null = null; // Track initial voicing center
 
   for (const spec of specs) {
     const allTones = getChordTones(spec);
@@ -516,8 +534,9 @@ export function voiceLead(
     let voices: number[];
 
     if (previousVoices === null) {
-      // First chord - initialize voices
+      // First chord - initialize voices and set anchor center
       voices = initializeVoices(pitchClasses, maxVoices, baseOctave, minNote, maxNote);
+      anchorCenter = voices.reduce((a, b) => a + b, 0) / voices.length;
     } else if (keepCommonTones) {
       // Keep common tones in place, move others minimally
       voices = new Array(maxVoices).fill(-1);
@@ -618,7 +637,13 @@ export function voiceLead(
       }
     } else {
       // No common tone retention - just minimize total movement
-      voices = findOptimalAssignment(previousVoices, pitchClasses, minNote, maxNote);
+      voices = findOptimalAssignment(
+        previousVoices,
+        pitchClasses,
+        minNote,
+        maxNote,
+        anchorCenter ?? undefined
+      );
     }
 
     const analysis: VoiceAnalysis = {};
