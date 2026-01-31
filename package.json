@@ -19,7 +19,11 @@
     "build:js": "bun build ./src/index.ts --outdir ./dist --target node",
     "build:types": "tsc -p tsconfig.build.json",
     "test": "bun test",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "fuzz": "npx jazzer",
+    "fuzz:parseChord": "npx jazzer fuzz/parseChord.fuzz.ts",
+    "fuzz:buildChord": "npx jazzer fuzz/buildChord.fuzz.ts",
+    "fuzz:chordPalette": "npx jazzer fuzz/chordPalette.fuzz.ts"
   },
   "devDependencies": {
     "@jazzer.js/core": "^2.1.0",

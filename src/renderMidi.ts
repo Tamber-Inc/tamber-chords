@@ -322,39 +322,115 @@ function selectTones(
   };
 }
 
-function findClosestVoicing(
+function findOptimalAssignment(
+  previousVoices: number[],
   targetPitchClasses: number[],
-  previousVoices: number[] | null,
+  minNote: number,
+  maxNote: number
+): number[] {
+  // For each previous voice, find the closest target pitch class
+  // Use a greedy assignment that minimizes total movement
+
+  const numVoices = previousVoices.length;
+  const assignments: number[] = new Array(numVoices).fill(-1);
+  const usedTargets = new Set<number>();
+
+  // Generate all possible target notes (all octaves in range) for each pitch class
+  function getCandidates(pc: number): number[] {
+    const candidates: number[] = [];
+    for (let midi = minNote; midi <= maxNote; midi++) {
+      if (midi % 12 === pc) {
+        candidates.push(midi);
+      }
+    }
+    return candidates;
+  }
+
+  // For each voice, find the best target
+  type Move = { voiceIdx: number; targetIdx: number; midi: number; cost: number };
+  const allMoves: Move[] = [];
+
+  for (let v = 0; v < numVoices; v++) {
+    const prevNote = previousVoices[v]!;
+    for (let t = 0; t < targetPitchClasses.length; t++) {
+      const pc = targetPitchClasses[t]!;
+      for (const midi of getCandidates(pc)) {
+        allMoves.push({
+          voiceIdx: v,
+          targetIdx: t,
+          midi,
+          cost: Math.abs(midi - prevNote),
+        });
+      }
+    }
+  }
+
+  // Sort by cost
+  allMoves.sort((a, b) => a.cost - b.cost);
+
+  // Greedy assignment
+  const assignedVoices = new Set<number>();
+
+  for (const move of allMoves) {
+    if (assignedVoices.has(move.voiceIdx)) continue;
+    if (usedTargets.has(move.targetIdx)) continue;
+
+    assignments[move.voiceIdx] = move.midi;
+    assignedVoices.add(move.voiceIdx);
+    usedTargets.add(move.targetIdx);
+
+    if (assignedVoices.size === numVoices) break;
+  }
+
+  // Handle any remaining voices (if targets < voices, need to double)
+  for (let v = 0; v < numVoices; v++) {
+    if (assignments[v] === -1) {
+      // Find closest available target (can reuse pitch classes)
+      const prevNote = previousVoices[v]!;
+      let bestMidi = prevNote;
+      let bestCost = Infinity;
+
+      for (const pc of targetPitchClasses) {
+        for (const midi of getCandidates(pc)) {
+          const cost = Math.abs(midi - prevNote);
+          if (cost < bestCost) {
+            bestCost = cost;
+            bestMidi = midi;
+          }
+        }
+      }
+      assignments[v] = bestMidi;
+    }
+  }
+
+  return assignments;
+}
+
+function initializeVoices(
+  pitchClasses: number[],
+  numVoices: number,
   baseOctave: number,
   minNote: number,
   maxNote: number
 ): number[] {
   const voices: number[] = [];
+  let currentFloor = 12 + baseOctave * 12;
 
-  for (let i = 0; i < targetPitchClasses.length; i++) {
-    const pc = targetPitchClasses[i]!;
+  for (let i = 0; i < numVoices; i++) {
+    const pc = pitchClasses[i % pitchClasses.length]!;
+    // Find the lowest note with this pitch class at or above currentFloor
+    let midi = currentFloor - (currentFloor % 12) + pc;
+    if (midi < currentFloor) midi += 12;
+    while (midi < minNote) midi += 12;
+    while (midi > maxNote) midi -= 12;
 
-    if (previousVoices && previousVoices[i] !== undefined) {
-      // Find the closest note with this pitch class to the previous voice
-      const prev = previousVoices[i]!;
-      const prevPc = prev % 12;
-      let diff = pc - prevPc;
-      if (diff > 6) diff -= 12;
-      if (diff < -6) diff += 12;
-
-      let candidate = prev + diff;
-
-      // Clamp to range
-      while (candidate < minNote) candidate += 12;
-      while (candidate > maxNote) candidate -= 12;
-
-      voices.push(candidate);
+    voices.push(midi);
+    // For the next voice, allow wrapping to next octave if needed
+    if (i < pitchClasses.length - 1) {
+      currentFloor = midi;
     } else {
-      // No previous voice, place in base octave
-      let note = 12 + baseOctave * 12 + pc;
-      while (note < minNote) note += 12;
-      while (note > maxNote) note -= 12;
-      voices.push(note);
+      // When doubling, start from base again
+      currentFloor = 12 + baseOctave * 12;
     }
   }
 
@@ -388,14 +464,14 @@ export function voiceLead(
     const allDegrees = getChordIntervalDegrees(spec.quality);
 
     // Select which tones to use based on maxVoices
-    const { tones, degrees, omitted, doubled } = selectTones(
+    const { tones, omitted, doubled } = selectTones(
       allTones,
       allDegrees,
       maxVoices,
       tonePriority
     );
 
-    // Get pitch classes
+    // Get pitch classes for the selected tones
     const pitchClasses = tones.map((t) => toPitchClass(t));
 
     // Determine bass
@@ -417,74 +493,82 @@ export function voiceLead(
     // Voice lead the upper voices
     let voices: number[];
 
-    if (keepCommonTones && previousVoices !== null) {
-      // Try to keep common tones in the same voice slot
-      voices = [];
-      const usedPcs = new Set<number>();
+    if (previousVoices === null) {
+      // First chord - initialize voices
+      voices = initializeVoices(pitchClasses, maxVoices, baseOctave, minNote, maxNote);
+    } else if (keepCommonTones) {
+      // Keep common tones in place, move others minimally
+      voices = new Array(maxVoices).fill(-1);
+      const usedTargetIndices = new Set<number>();
 
-      for (let i = 0; i < maxVoices; i++) {
-        const prevVoice = previousVoices[i];
-        if (prevVoice !== undefined) {
-          const prevPc = prevVoice % 12;
-          // Is this pitch class in our target?
-          if (pitchClasses.includes(prevPc) && !usedPcs.has(prevPc)) {
-            voices.push(prevVoice);
-            usedPcs.add(prevPc);
-          }
+      // First pass: keep common tones
+      for (let v = 0; v < maxVoices; v++) {
+        const prevNote = previousVoices[v]!;
+        const prevPc = prevNote % 12;
+
+        // Check if this pitch class is in the target chord
+        const targetIdx = pitchClasses.findIndex(
+          (pc, idx) => pc === prevPc && !usedTargetIndices.has(idx)
+        );
+
+        if (targetIdx !== -1) {
+          // Common tone - keep it
+          voices[v] = prevNote;
+          usedTargetIndices.add(targetIdx);
         }
       }
 
-      // Fill remaining voices
-      for (const pc of pitchClasses) {
-        if (!usedPcs.has(pc)) {
-          // Find closest position
-          const refNote =
-            previousVoices.length > 0
-              ? previousVoices.reduce((a, b) => a + b, 0) / previousVoices.length
-              : 12 + baseOctave * 12 + pc;
+      // Second pass: assign remaining voices with minimal motion
+      const remainingVoices: number[] = [];
+      const remainingTargets: number[] = [];
 
-          let note = Math.round(refNote / 12) * 12 + pc;
-          while (note < minNote) note += 12;
-          while (note > maxNote) note -= 12;
-
-          // Make sure we don't go too far from ref
-          if (Math.abs(note - refNote) > 7) {
-            note = note > refNote ? note - 12 : note + 12;
-            if (note < minNote) note += 12;
-            if (note > maxNote) note -= 12;
-          }
-
-          voices.push(note);
-          usedPcs.add(pc);
+      for (let v = 0; v < maxVoices; v++) {
+        if (voices[v] === -1) {
+          remainingVoices.push(v);
         }
       }
 
-      // Ensure we have exactly maxVoices
-      while (voices.length < maxVoices) {
-        // Double a tone
-        const pc = pitchClasses[voices.length % pitchClasses.length]!;
-        let note = 12 + baseOctave * 12 + pc;
-        while (note < minNote) note += 12;
-        while (note > maxNote) note -= 12;
-        voices.push(note);
+      for (let t = 0; t < pitchClasses.length; t++) {
+        if (!usedTargetIndices.has(t)) {
+          remainingTargets.push(t);
+        }
+      }
+
+      // Assign remaining targets to remaining voices by minimal motion
+      if (remainingVoices.length > 0 && remainingTargets.length > 0) {
+        const tempPrevVoices = remainingVoices.map((v) => previousVoices![v]!);
+        const tempTargetPcs = remainingTargets.map((t) => pitchClasses[t]!);
+        const assigned = findOptimalAssignment(tempPrevVoices, tempTargetPcs, minNote, maxNote);
+
+        for (let i = 0; i < remainingVoices.length; i++) {
+          voices[remainingVoices[i]!] = assigned[i]!;
+        }
+      }
+
+      // Handle any remaining voices needing doubling
+      for (let v = 0; v < maxVoices; v++) {
+        if (voices[v] === -1) {
+          const prevNote = previousVoices[v]!;
+          let bestMidi = prevNote;
+          let bestCost = Infinity;
+
+          for (const pc of pitchClasses) {
+            for (let midi = minNote; midi <= maxNote; midi++) {
+              if (midi % 12 === pc) {
+                const cost = Math.abs(midi - prevNote);
+                if (cost < bestCost) {
+                  bestCost = cost;
+                  bestMidi = midi;
+                }
+              }
+            }
+          }
+          voices[v] = bestMidi;
+        }
       }
     } else {
-      voices = findClosestVoicing(
-        pitchClasses,
-        previousVoices,
-        baseOctave,
-        minNote,
-        maxNote
-      );
-
-      // Pad with doubled tones if needed
-      while (voices.length < maxVoices) {
-        const pc = pitchClasses[voices.length % pitchClasses.length]!;
-        let note = 12 + baseOctave * 12 + pc;
-        while (note < minNote) note += 12;
-        while (note > maxNote) note -= 12;
-        voices.push(note);
-      }
+      // No common tone retention - just minimize total movement
+      voices = findOptimalAssignment(previousVoices, pitchClasses, minNote, maxNote);
     }
 
     const analysis: VoiceAnalysis = {};
