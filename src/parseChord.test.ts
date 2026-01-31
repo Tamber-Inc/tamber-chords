@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { parseChord } from "./parseChord";
+import { parseChord, formatChord } from "./parseChord";
 import { Note, ChordParseError } from "./noteName";
 import type { Accidental } from "./noteName";
 
@@ -436,5 +436,147 @@ describe("parseChord", () => {
         expect((e as ChordParseError).message).toBeDefined();
       }
     });
+  });
+});
+
+describe("formatChord", () => {
+  describe("formats ParsedChord back to string", () => {
+    test("formats C major triad", () => {
+      const parsed = parseChord("C");
+      expect(formatChord(parsed)).toBe("C");
+    });
+
+    test("formats C minor triad", () => {
+      const parsed = parseChord("Cm");
+      expect(formatChord(parsed)).toBe("Cm");
+    });
+
+    test("formats sharp root", () => {
+      const parsed = parseChord("F#m");
+      expect(formatChord(parsed)).toBe("F#m");
+    });
+
+    test("formats flat root", () => {
+      const parsed = parseChord("Bbmaj7");
+      expect(formatChord(parsed)).toBe("Bbmaj7");
+    });
+
+    test("formats slash chord", () => {
+      const parsed = parseChord("C/E");
+      expect(formatChord(parsed)).toBe("C/E");
+    });
+
+    test("formats power chord", () => {
+      const parsed = parseChord("G5");
+      expect(formatChord(parsed)).toBe("G5");
+    });
+  });
+});
+
+describe("round-trip: parse → format → parse", () => {
+  const testCases = [
+    // Triads
+    "C", "Cm", "Cdim", "Caug",
+    "F#", "F#m", "F#dim", "F#aug",
+    "Bb", "Bbm", "Bbdim", "Bbaug",
+    "Db", "Dbm", "Dbdim",
+    // Power chords
+    "C5", "F#5", "Bb5",
+    // Seventh chords
+    "Cmaj7", "Cm7", "C7", "Cdim7", "Cm7b5",
+    "F#maj7", "F#m7", "F#7",
+    "Bbmaj7", "Bbm7", "Bb7",
+    // Extended chords
+    "C9", "Cmaj9", "Cm9",
+    "C11", "Cmaj11", "Cm11",
+    // Slash chords
+    "C/E", "C/G", "Dm/A", "F#m/C#",
+    "Cmaj7/E", "Dm7/A",
+  ];
+
+  for (const symbol of testCases) {
+    test(`round-trips "${symbol}"`, () => {
+      const parsed = parseChord(symbol);
+      const formatted = formatChord(parsed);
+      const reparsed = parseChord(formatted);
+
+      // Structural equality (same chord)
+      expect(reparsed.root).toEqual(parsed.root);
+      expect(reparsed.bass).toEqual(parsed.bass);
+      expect(reparsed.triadQuality).toBe(parsed.triadQuality);
+      expect(reparsed.chordType).toBe(parsed.chordType);
+      expect(reparsed.tones).toEqual(parsed.tones);
+      expect(reparsed.intervals).toEqual(parsed.intervals);
+    });
+  }
+});
+
+describe("round-trip: normalizes equivalent spellings", () => {
+  test("C and Cmaj normalize to same output", () => {
+    const c = parseChord("C");
+    const cmaj = parseChord("Cmaj");
+    expect(formatChord(c)).toBe(formatChord(cmaj));
+  });
+
+  test("Cm and Cmin normalize to same output", () => {
+    const cm = parseChord("Cm");
+    const cmin = parseChord("Cmin");
+    expect(formatChord(cm)).toBe(formatChord(cmin));
+  });
+
+  test("CM7 and Cmaj7 normalize to same output", () => {
+    const cm7 = parseChord("CM7");
+    const cmaj7 = parseChord("Cmaj7");
+    expect(formatChord(cm7)).toBe(formatChord(cmaj7));
+  });
+
+  test("Dm7 and Dmin7 normalize to same output", () => {
+    const dm7 = parseChord("Dm7");
+    const dmin7 = parseChord("Dmin7");
+    expect(formatChord(dm7)).toBe(formatChord(dmin7));
+  });
+
+  test("C+ and Caug normalize to same output", () => {
+    const cplus = parseChord("C+");
+    const caug = parseChord("Caug");
+    expect(formatChord(cplus)).toBe(formatChord(caug));
+  });
+});
+
+describe("round-trip: preserves note spellings in tones", () => {
+  test("F#maj7 preserves E# spelling after round-trip", () => {
+    const parsed = parseChord("F#maj7");
+    const formatted = formatChord(parsed);
+    const reparsed = parseChord(formatted);
+
+    // The 7th should still be E#, not F
+    expect(reparsed.tones[3]).toEqual(Note.E_SHARP);
+  });
+
+  test("Abm7 preserves Cb spelling after round-trip", () => {
+    const parsed = parseChord("Abm7");
+    const formatted = formatChord(parsed);
+    const reparsed = parseChord(formatted);
+
+    // The 3rd should still be Cb, not B
+    expect(reparsed.tones[1]).toEqual(Note.C_FLAT);
+  });
+
+  test("Dbdim preserves Fb and Abb spellings after round-trip", () => {
+    const parsed = parseChord("Dbdim");
+    const formatted = formatChord(parsed);
+    const reparsed = parseChord(formatted);
+
+    expect(reparsed.tones[1]).toEqual(Note.F_FLAT);
+    expect(reparsed.tones[2]).toEqual(Note.A_DOUBLE_FLAT);
+  });
+
+  test("Cdim7 preserves Bbb spelling after round-trip", () => {
+    const parsed = parseChord("Cdim7");
+    const formatted = formatChord(parsed);
+    const reparsed = parseChord(formatted);
+
+    // The 7th should still be Bbb
+    expect(reparsed.tones[3]).toEqual(Note.B_DOUBLE_FLAT);
   });
 });
