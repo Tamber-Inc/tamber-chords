@@ -276,14 +276,15 @@ const CHORD_TYPES: Record<ChordType, ChordTypeDefinition> = {
  * Returns the NoteName and the remaining string
  */
 function parseRootNote(input: string): { root: NoteName; rest: string } {
-  if (input.length === 0) {
+  const firstChar = input[0];
+  if (firstChar === undefined) {
     throw new ChordParseError("Empty chord string", "EMPTY_INPUT");
   }
 
-  const letter = input[0].toUpperCase();
+  const letter = firstChar.toUpperCase();
   if (!LETTERS.includes(letter as Letter)) {
     throw new ChordParseError(
-      `Invalid root note: ${input[0]}`,
+      `Invalid root note: ${firstChar}`,
       "INVALID_ROOT",
       0
     );
