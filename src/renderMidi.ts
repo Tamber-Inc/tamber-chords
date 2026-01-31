@@ -426,6 +426,7 @@ function initializeVoices(
   maxNote: number
 ): number[] {
   const voices: number[] = [];
+  const usedMidi = new Set<number>();
   let currentFloor = 12 + baseOctave * 12;
 
   for (let i = 0; i < numVoices; i++) {
@@ -436,14 +437,23 @@ function initializeVoices(
     while (midi < minNote) midi += 12;
     while (midi > maxNote) midi -= 12;
 
-    voices.push(midi);
-    // For the next voice, allow wrapping to next octave if needed
-    if (i < pitchClasses.length - 1) {
-      currentFloor = midi;
-    } else {
-      // When doubling, start from base again
-      currentFloor = 12 + baseOctave * 12;
+    // Ensure unique MIDI note
+    while (usedMidi.has(midi) && midi <= maxNote) {
+      midi += 12;
     }
+    if (midi > maxNote) {
+      // Try going down instead
+      midi = currentFloor - (currentFloor % 12) + pc;
+      while (usedMidi.has(midi) && midi >= minNote) {
+        midi -= 12;
+      }
+    }
+
+    voices.push(midi);
+    usedMidi.add(midi);
+
+    // For the next voice, floor is at least this note
+    currentFloor = midi;
   }
 
   return voices;
@@ -512,6 +522,7 @@ export function voiceLead(
       // Keep common tones in place, move others minimally
       voices = new Array(maxVoices).fill(-1);
       const usedTargetIndices = new Set<number>();
+      const usedMidiNotes = new Set<number>();
 
       // First pass: keep common tones
       for (let v = 0; v < maxVoices; v++) {
@@ -523,10 +534,11 @@ export function voiceLead(
           (pc, idx) => pc === prevPc && !usedTargetIndices.has(idx)
         );
 
-        if (targetIdx !== -1) {
+        if (targetIdx !== -1 && !usedMidiNotes.has(prevNote)) {
           // Common tone - keep it
           voices[v] = prevNote;
           usedTargetIndices.add(targetIdx);
+          usedMidiNotes.add(prevNote);
         }
       }
 
@@ -550,10 +562,29 @@ export function voiceLead(
       if (remainingVoices.length > 0 && remainingTargets.length > 0) {
         const tempPrevVoices = remainingVoices.map((v) => previousVoices![v]!);
         const tempTargetPcs = remainingTargets.map((t) => pitchClasses[t]!);
-        const assigned = findOptimalAssignment(tempPrevVoices, tempTargetPcs, minNote, maxNote);
 
-        for (let i = 0; i < remainingVoices.length; i++) {
-          voices[remainingVoices[i]!] = assigned[i]!;
+        // Use custom assignment that respects usedMidiNotes
+        for (let i = 0; i < remainingVoices.length && i < remainingTargets.length; i++) {
+          const prevNote = tempPrevVoices[i]!;
+          const pc = tempTargetPcs[i]!;
+
+          let bestMidi = -1;
+          let bestCost = Infinity;
+
+          for (let midi = minNote; midi <= maxNote; midi++) {
+            if (midi % 12 === pc && !usedMidiNotes.has(midi)) {
+              const cost = Math.abs(midi - prevNote);
+              if (cost < bestCost) {
+                bestCost = cost;
+                bestMidi = midi;
+              }
+            }
+          }
+
+          if (bestMidi !== -1) {
+            voices[remainingVoices[i]!] = bestMidi;
+            usedMidiNotes.add(bestMidi);
+          }
         }
       }
 
@@ -561,12 +592,12 @@ export function voiceLead(
       for (let v = 0; v < maxVoices; v++) {
         if (voices[v] === -1) {
           const prevNote = previousVoices[v]!;
-          let bestMidi = prevNote;
+          let bestMidi = -1;
           let bestCost = Infinity;
 
           for (const pc of pitchClasses) {
             for (let midi = minNote; midi <= maxNote; midi++) {
-              if (midi % 12 === pc) {
+              if (midi % 12 === pc && !usedMidiNotes.has(midi)) {
                 const cost = Math.abs(midi - prevNote);
                 if (cost < bestCost) {
                   bestCost = cost;
@@ -575,7 +606,14 @@ export function voiceLead(
               }
             }
           }
-          voices[v] = bestMidi;
+
+          if (bestMidi !== -1) {
+            voices[v] = bestMidi;
+            usedMidiNotes.add(bestMidi);
+          } else {
+            // Fallback: use previous note
+            voices[v] = prevNote;
+          }
         }
       }
     } else {
