@@ -1,51 +1,32 @@
-import type { NoteName, Letter, Accidental } from "./noteName";
 import { N, toPitchClass } from "./noteName";
 
-// ============================================================================
-// Types
-// ============================================================================
+// Types derived from Zod schemas - see schemas.ts
+import type {
+  NoteName,
+  Letter,
+  Accidental,
+  ChordQuality,
+  Tension,
+  OmitDegree,
+  ChordSpec,
+  Key,
+  PaletteOptions,
+  Chord,
+  ChordError,
+} from "./schemas";
 
-export type ChordQuality =
-  | "maj" | "min" | "dim" | "aug"
-  | "7" | "maj7" | "min7" | "m7b5" | "dim7"
-  | "9" | "maj9" | "min9"
-  | "11" | "maj11" | "min11"
-  | "13" | "maj13" | "min13";
+export type {
+  ChordQuality,
+  Tension,
+  OmitDegree,
+  ChordSpec,
+  Key,
+  PaletteOptions,
+  Chord,
+  ChordError,
+} from "./schemas";
 
-export type Tension = "b9" | "#9" | "#11" | "b13";
-export type OmitDegree = "3" | "5";
-
-export type ChordSpec = {
-  root: NoteName;
-  quality: ChordQuality;
-  tensions?: Tension[];
-  omit?: OmitDegree[];
-  bass?: NoteName;
-};
-
-export type Key = {
-  root: NoteName;
-  mode: "major" | "minor";
-};
-
-export type PaletteOptions = {
-  color?: "triad" | "seventh" | "extended";
-  maxExtension?: 7 | 9 | 11 | 13;
-  includeDominants?: boolean;
-  includeBorrowed?: boolean;
-};
-
-export type Chord = {
-  symbol: string;
-  tones: NoteName[];
-  bass?: NoteName;
-};
-
-export type ChordError = {
-  code: string;
-  message: string;
-};
-
+// Result is a generic type - keep definition here for flexibility
 export type Result<T> =
   | { ok: true; value: T }
   | { ok: false; error: ChordError };

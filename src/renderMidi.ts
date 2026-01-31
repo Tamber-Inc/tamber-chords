@@ -1,71 +1,40 @@
-import type { NoteName, Letter, Accidental } from "./noteName";
 import { N, toPitchClass } from "./noteName";
-import type { ChordSpec, ChordQuality } from "./buildChord";
 import { buildChord } from "./buildChord";
 
-// ============================================================================
-// Types
-// ============================================================================
+// Types derived from Zod schemas - see schemas.ts
+import type {
+  NoteName,
+  Letter,
+  ChordSpec,
+  ChordQuality,
+  SpellingStrategy,
+  MidiSpelling,
+  VoiceAnalysis,
+  MidiChord,
+  PerformanceChord,
+  PerformanceOutput,
+  VoicingType,
+  TonePriorityDegree,
+  BassStrategy,
+  RenderOptions,
+  VoiceLeadOptions,
+  PerformanceOptions,
+} from "./schemas";
 
-export type SpellingStrategy = "sharps" | "flats";
-
-export type MidiSpelling = {
-  note: NoteName;
-  octave: number;
-};
-
-export type VoiceAnalysis = {
-  omitted?: string[];
-  doubled?: string[];
-};
-
-export type MidiChord = {
-  bass: number;
-  voices: number[];
-  spec: ChordSpec;
-  analysis?: VoiceAnalysis;
-};
-
-export type PerformanceChord = {
-  notes: number[];
-  velocity: number;
-  velocities?: number[];
-  index: number;
-  startBeat?: number;
-  durationBeats?: number;
-  channel: number;
-};
-
-export type PerformanceOutput = PerformanceChord;
-
-export type VoicingType = "close" | "drop2" | "drop3";
-export type TonePriorityDegree = "root" | "3" | "5" | "7" | "9" | "11" | "13";
-export type BassStrategy = "followRoot" | "minimalMotion";
-
-export type RenderOptions = {
-  baseOctave: number;
-  bassOctave?: number;
-  voicing?: VoicingType;
-};
-
-export type VoiceLeadOptions = {
-  baseOctave: number;
-  maxVoices?: number;
-  keepCommonTones?: boolean;
-  tonePriority?: TonePriorityDegree[];
-  minNote?: number;
-  maxNote?: number;
-  bassOctave?: number;
-  bassStrategy?: BassStrategy;
-};
-
-export type PerformanceOptions = {
-  velocity?: number;
-  velocities?: number[];
-  startTimes?: number[];
-  duration?: number;
-  channel?: number;
-};
+export type {
+  SpellingStrategy,
+  MidiSpelling,
+  VoiceAnalysis,
+  MidiChord,
+  PerformanceChord,
+  PerformanceOutput,
+  VoicingType,
+  TonePriorityDegree,
+  BassStrategy,
+  RenderOptions,
+  VoiceLeadOptions,
+  PerformanceOptions,
+} from "./schemas";
 
 // ============================================================================
 // Constants

@@ -11,17 +11,7 @@ export {
   chordPalette,
 } from "./buildChord";
 
-export type {
-  ChordQuality,
-  Tension,
-  OmitDegree,
-  ChordSpec,
-  Key,
-  PaletteOptions,
-  Chord,
-  ChordError,
-  Result,
-} from "./buildChord";
+export type { Result } from "./buildChord";
 
 // Core primitives
 export {
@@ -31,12 +21,87 @@ export {
   ChordParseError,
 } from "./noteName";
 
+// Runtime type for Intervals (Map-based, not JSON-serializable)
+export type { Intervals, ParsedChord } from "./noteName";
+
+// ============================================================================
+// Zod Schemas - for runtime validation
+// ============================================================================
+
+export {
+  // Core primitives
+  LetterSchema,
+  AccidentalSchema,
+  NoteNameSchema,
+  // Chord qualities
+  TriadQualitySchema,
+  ChordTypeSchema,
+  ChordQualitySchema,
+  TensionSchema,
+  OmitDegreeSchema,
+  // Chord specifications
+  ChordSpecSchema,
+  KeySchema,
+  KeyModeSchema,
+  PaletteOptionsSchema,
+  PaletteColorSchema,
+  MaxExtensionSchema,
+  ChordSchema,
+  ChordErrorSchema,
+  // Parsed chord (JSON representation)
+  ParsedChordSchema,
+  IntervalsJsonSchema,
+  // MIDI / Rendering
+  SpellingStrategySchema,
+  MidiSpellingSchema,
+  VoiceAnalysisSchema,
+  MidiChordSchema,
+  PerformanceChordSchema,
+  PerformanceOutputSchema,
+  VoicingTypeSchema,
+  TonePriorityDegreeSchema,
+  BassStrategySchema,
+  RenderOptionsSchema,
+  VoiceLeadOptionsSchema,
+  PerformanceOptionsSchema,
+  // Result helpers
+  createResultSchema,
+  ChordResultSchema,
+  VoidResultSchema,
+} from "./schemas";
+
+// Types derived from schemas
 export type {
-  NoteName,
   Letter,
   Accidental,
+  NoteName,
   TriadQuality,
   ChordType,
-  Intervals,
-  ParsedChord,
-} from "./noteName";
+  ChordQuality,
+  Tension,
+  OmitDegree,
+  ChordSpec,
+  Key,
+  KeyMode,
+  PaletteOptions,
+  PaletteColor,
+  MaxExtension,
+  Chord,
+  ChordError,
+  ParsedChordJson,
+  IntervalsJson,
+  SpellingStrategy,
+  MidiSpelling,
+  VoiceAnalysis,
+  MidiChord,
+  PerformanceChord,
+  PerformanceOutput,
+  VoicingType,
+  TonePriorityDegree,
+  BassStrategy,
+  RenderOptions,
+  VoiceLeadOptions,
+  PerformanceOptions,
+  ChordResult,
+  VoidResult,
+} from "./schemas";

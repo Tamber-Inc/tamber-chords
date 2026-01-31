@@ -1,11 +1,21 @@
-export type Letter = "A" | "B" | "C" | "D" | "E" | "F" | "G";
+// Types derived from Zod schemas - see schemas.ts
+import type { Letter, Accidental, NoteName, TriadQuality, ChordType } from "./schemas";
+export type { Letter, Accidental, NoteName, TriadQuality, ChordType } from "./schemas";
 
-// -2 = double flat, -1 = flat, 0 = natural, 1 = sharp, 2 = double sharp
-export type Accidental = -2 | -1 | 0 | 1 | 2;
+// Intervals is a Map type - can't be represented in Zod/JSON directly
+// Keep this here for runtime use
+export type Intervals = Map<number, Accidental>;
 
-export interface NoteName {
-  letter: Letter;
-  accidental: Accidental;
+// ParsedChord uses Intervals (Map) so we keep the full interface here
+// For JSON serialization, see ParsedChordJson in schemas.ts
+export interface ParsedChord {
+  input: string;
+  root: NoteName;
+  bass: NoteName;
+  triadQuality: TriadQuality;
+  chordType: ChordType;
+  intervals: Intervals;
+  tones: NoteName[];
 }
 
 // Convert NoteName to pitch class (0-11)
@@ -70,41 +80,6 @@ export const Note = {
   A_DOUBLE_FLAT: N("A", -2),
   B_DOUBLE_FLAT: N("B", -2),
 } as const;
-
-export type TriadQuality = "major" | "minor" | "diminished" | "augmented" | "sus2" | "sus4" | "power";
-
-export type ChordType =
-  | "maj"
-  | "min"
-  | "dim"
-  | "aug"
-  | "5"
-  | "7"
-  | "maj7"
-  | "min7"
-  | "dim7"
-  | "m7b5"
-  | "9"
-  | "maj9"
-  | "min9"
-  | "11"
-  | "maj11"
-  | "min11";
-
-// Interval degrees and their accidentals
-// e.g., Map { 1 => 0, 3 => 0, 5 => 0 } for major triad
-// e.g., Map { 1 => 0, 3 => -1, 5 => 0, 7 => -1 } for minor 7th
-export type Intervals = Map<number, Accidental>;
-
-export interface ParsedChord {
-  input: string;
-  root: NoteName;
-  bass: NoteName;
-  triadQuality: TriadQuality;
-  chordType: ChordType;
-  intervals: Intervals;
-  tones: NoteName[]; // tertian stacking: root, 3rd, 5th, (7th), (9th), (11th), (13th)
-}
 
 export class ChordParseError extends Error {
   constructor(
