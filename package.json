@@ -18,12 +18,13 @@
     "build": "bun run build:js && bun run build:types",
     "build:js": "bun build ./src/index.ts --outdir ./dist --target node",
     "build:types": "tsc -p tsconfig.build.json",
+    "build:fuzz": "bun build ./src/index.ts --outdir ./dist-fuzz --target node --format cjs",
     "test": "bun test",
     "prepublishOnly": "bun run build",
-    "fuzz": "npx jazzer",
-    "fuzz:parseChord": "npx jazzer fuzz/parseChord.fuzz.ts",
-    "fuzz:buildChord": "npx jazzer fuzz/buildChord.fuzz.ts",
-    "fuzz:chordPalette": "npx jazzer fuzz/chordPalette.fuzz.ts"
+    "fuzz": "bun run build:fuzz && npx jazzer",
+    "fuzz:parseChord": "bun run build:fuzz && npx jazzer fuzz/parseChord.fuzz.js",
+    "fuzz:buildChord": "bun run build:fuzz && npx jazzer fuzz/buildChord.fuzz.js",
+    "fuzz:chordPalette": "bun run build:fuzz && npx jazzer fuzz/chordPalette.fuzz.js"
   },
   "devDependencies": {
     "@jazzer.js/core": "^2.1.0",

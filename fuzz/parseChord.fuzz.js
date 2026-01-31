@@ -3,7 +3,7 @@
  *
  * Highest priority - parses arbitrary user input strings into chord structures.
  */
-const { parseChord } = require("../dist/index.js");
+const { parseChord } = require("../dist-fuzz/index.js");
 
 module.exports.fuzz = function(data) {
   const input = data.toString("utf-8");

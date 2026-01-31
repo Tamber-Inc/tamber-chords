@@ -3,7 +3,7 @@
  *
  * Tests chord palette generation with various key and option combinations.
  */
-const { chordPalette } = require("../dist/index.js");
+const { chordPalette } = require("../dist-fuzz/index.js");
 
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G"];
 const ACCIDENTALS = [-2, -1, 0, 1, 2];

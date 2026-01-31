@@ -3,7 +3,7 @@
  *
  * Generates structured ChordSpec objects from raw bytes.
  */
-const { buildChord, validateChordSpec } = require("../dist/index.js");
+const { buildChord, validateChordSpec } = require("../dist-fuzz/index.js");
 
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G"];
 const ACCIDENTALS = [-2, -1, 0, 1, 2];
