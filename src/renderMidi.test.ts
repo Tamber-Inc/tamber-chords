@@ -7,13 +7,7 @@ import {
 } from "./renderMidi";
 import { Note } from "./noteName";
 import type { ChordSpec } from "./buildChord";
-import type {
-  VoicingOptions,
-  VoiceLeadingOptions,
-  MidiChord,
-  MidiSpelling,
-  SpellingStrategy,
-} from "./renderMidi";
+import type { MidiChord, MidiSpelling, SpellingStrategy } from "./renderMidi";
 
 // ============================================================================
 // noteToMidi - pitch conversion (NoteName + octave → MIDI number)
@@ -202,45 +196,48 @@ describe("midiToSpelling", () => {
 });
 
 // ============================================================================
-// MidiChord structure - explicit voice identity contract
+// MidiChord structure - flat array for synthesizer
 //
-// CRITICAL: `voices` array has STABLE INDICES across voice leading.
-// voices[0] is always the bottom voice, voices[N-1] is always the top voice.
-// This is the voice-leading contract: same index = same voice.
+// OUTPUT: number[] sorted low-to-high, bass note included at index 0
+// This is the final output format for sending to a DAW/synthesizer.
 // ============================================================================
 
 describe("MidiChord structure", () => {
-  test("voices array is ordered bottom-to-top (stable voice indices)", () => {
+  test("notes is a flat number[] sorted low-to-high", () => {
     const chords: ChordSpec[] = [{ root: Note.C, quality: "maj7" }];
     const result = renderChordSequence(chords, { baseOctave: 4 });
 
-    const voices = result[0].voices;
-    for (let i = 0; i < voices.length - 1; i++) {
-      expect(voices[i]).toBeLessThan(voices[i + 1]!);
+    expect(Array.isArray(result[0].notes)).toBe(true);
+    expect(result[0].notes.every((n) => typeof n === "number")).toBe(true);
+
+    // Sorted low to high
+    for (let i = 0; i < result[0].notes.length - 1; i++) {
+      expect(result[0].notes[i]).toBeLessThan(result[0].notes[i + 1]!);
     }
   });
 
-  test("voices and pitchSet are different views of same data", () => {
-    const chords: ChordSpec[] = [{ root: Note.C, quality: "maj7" }];
+  test("bass note is included in notes array (lowest note)", () => {
+    const chords: ChordSpec[] = [{ root: Note.C, quality: "maj" }];
     const result = renderChordSequence(chords, { baseOctave: 4 });
 
-    // pitchSet is sorted pitch classes (for analysis)
-    // voices is the actual MIDI notes in voice order (for playback + voice leading)
-    expect(new Set(result[0].voices)).toEqual(new Set(result[0].pitchSet));
+    // Bass is the first (lowest) note
+    expect(result[0].notes[0]).toBe(48); // C3 bass
+    expect(result[0].notes).toEqual([48, 60, 64, 67]); // C3, C4, E4, G4
   });
 
-  test("spec reference is preserved", () => {
-    const spec: ChordSpec = { root: Note.C, quality: "maj" };
-    const result = renderChordSequence([spec], { baseOctave: 4 });
-    expect(result[0].spec).toEqual(spec);
-  });
-
-  test("bass is separate from voices", () => {
+  test("slash chord bass is included at correct position", () => {
     const chords: ChordSpec[] = [{ root: Note.C, quality: "maj", bass: Note.E }];
     const result = renderChordSequence(chords, { baseOctave: 4 });
 
-    expect(result[0].bass).toBeDefined();
-    expect(result[0].voices).not.toContain(result[0].bass);
+    // E3 bass, then C4, E4, G4
+    expect(result[0].notes[0]).toBe(52); // E3
+    expect(result[0].notes).toEqual([52, 60, 64, 67]);
+  });
+
+  test("spec reference is preserved for debugging", () => {
+    const spec: ChordSpec = { root: Note.C, quality: "maj" };
+    const result = renderChordSequence([spec], { baseOctave: 4 });
+    expect(result[0].spec).toEqual(spec);
   });
 });
 
