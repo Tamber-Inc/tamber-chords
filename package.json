@@ -22,6 +22,7 @@
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
+    "@jazzer.js/core": "^2.1.0",
     "@types/bun": "latest",
     "typescript": "^5"
   }
