@@ -282,7 +282,7 @@ function formatQuality(quality: ChordQuality): string {
   }
 }
 
-function formatSymbol(spec: ChordSpec): string {
+export function buildChordSymbol(spec: ChordSpec): string {
   let symbol = formatNote(spec.root);
   symbol += formatQuality(spec.quality);
 
@@ -354,7 +354,7 @@ export function buildChord(spec: ChordSpec): Result<Chord> {
     calculateTone(root, degree, intervalMap.get(degree)!)
   );
 
-  const symbol = formatSymbol(spec);
+  const symbol = buildChordSymbol(spec);
 
   const chord: Chord = { symbol, tones };
   if (bass) {

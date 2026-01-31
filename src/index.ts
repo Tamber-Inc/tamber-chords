@@ -7,9 +7,19 @@ export {
 // Object-based API (for LLM tooling)
 export {
   buildChord,
+  buildChordSymbol,
   validateChordSpec,
   chordPalette,
 } from "./buildChord";
+
+// MIDI rendering
+export {
+  noteToMidi,
+  midiToSpelling,
+  renderChordSequence,
+  voiceLead,
+  toPerformanceOutput,
+} from "./renderMidi";
 
 export type { Result } from "./buildChord";
 
