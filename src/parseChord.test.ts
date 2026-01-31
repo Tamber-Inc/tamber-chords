@@ -1,269 +1,406 @@
 import { test, expect, describe } from "bun:test";
 import { parseChord } from "./parseChord";
-import { PC } from "./pitchClass";
+import { Note, N } from "./noteName";
 
-// Pitch classes ordered by harmonic relevance: root, fifth, third, (seventh), (ninth), (eleventh)
+// Tertian stacking order: root, 3rd, 5th, (7th), (9th), (11th), (13th)
+// Spellings are preserved for round-trippability (E# !== F, Cb !== B)
 
 describe("parseChord", () => {
   describe("major triads", () => {
     test("Cmaj returns C major triad", () => {
       const result = parseChord("Cmaj");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E]); // root, fifth, third
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G]); // root, 3rd, 5th
     });
 
     test("C returns C major triad (implicit major)", () => {
       const result = parseChord("C");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G]);
     });
 
     test("Dmaj returns D major triad", () => {
       const result = parseChord("Dmaj");
-      expect(result.bassNote).toBe(PC.D);
-      expect(result.pitchClasses).toEqual([PC.D, PC.A, PC.F_SHARP]); // D, A, F#
+      expect(result.root).toEqual(Note.D);
+      expect(result.bass).toEqual(Note.D);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.D, Note.F_SHARP, Note.A]);
     });
 
     test("F#maj returns F# major triad", () => {
       const result = parseChord("F#maj");
-      expect(result.bassNote).toBe(PC.F_SHARP);
-      expect(result.pitchClasses).toEqual([PC.F_SHARP, PC.C_SHARP, PC.A_SHARP]); // F#, C#, A#
+      expect(result.root).toEqual(Note.F_SHARP);
+      expect(result.bass).toEqual(Note.F_SHARP);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.F_SHARP, Note.A_SHARP, Note.C_SHARP]);
     });
 
     test("Bbmaj returns Bb major triad", () => {
       const result = parseChord("Bbmaj");
-      expect(result.bassNote).toBe(PC.B_FLAT);
-      expect(result.pitchClasses).toEqual([PC.B_FLAT, PC.F, PC.D]); // Bb, F, D
+      expect(result.root).toEqual(Note.B_FLAT);
+      expect(result.bass).toEqual(Note.B_FLAT);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.B_FLAT, Note.D, Note.F]);
     });
 
     test("Dbmaj returns Db major triad", () => {
       const result = parseChord("Dbmaj");
-      expect(result.bassNote).toBe(PC.D_FLAT);
-      expect(result.pitchClasses).toEqual([PC.D_FLAT, PC.A_FLAT, PC.F]); // Db, Ab, F
+      expect(result.root).toEqual(Note.D_FLAT);
+      expect(result.bass).toEqual(Note.D_FLAT);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.D_FLAT, Note.F, Note.A_FLAT]);
     });
   });
 
   describe("minor triads", () => {
     test("Cm returns C minor triad", () => {
       const result = parseChord("Cm");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E_FLAT]); // root, fifth, minor third
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.C, Note.E_FLAT, Note.G]);
     });
 
     test("Cmin returns C minor triad", () => {
       const result = parseChord("Cmin");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E_FLAT]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.C, Note.E_FLAT, Note.G]);
     });
 
     test("C#m returns C# minor triad", () => {
       const result = parseChord("C#m");
-      expect(result.bassNote).toBe(PC.C_SHARP);
-      expect(result.pitchClasses).toEqual([PC.C_SHARP, PC.G_SHARP, PC.E]); // C#, G#, E
+      expect(result.root).toEqual(Note.C_SHARP);
+      expect(result.bass).toEqual(Note.C_SHARP);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.C_SHARP, Note.E, Note.G_SHARP]);
     });
 
     test("Am returns A minor triad", () => {
       const result = parseChord("Am");
-      expect(result.bassNote).toBe(PC.A);
-      expect(result.pitchClasses).toEqual([PC.A, PC.E, PC.C]); // A, E, C
+      expect(result.root).toEqual(Note.A);
+      expect(result.bass).toEqual(Note.A);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.A, Note.C, Note.E]);
     });
   });
 
   describe("diminished triads", () => {
     test("Cdim returns C diminished triad", () => {
       const result = parseChord("Cdim");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G_FLAT, PC.E_FLAT]); // root, dim fifth, minor third
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("diminished");
+      expect(result.chordTones).toEqual([Note.C, Note.E_FLAT, Note.G_FLAT]);
     });
 
-    test("Dbdim returns Db diminished triad", () => {
+    test("Dbdim returns Db diminished triad with correct spellings", () => {
       const result = parseChord("Dbdim");
-      expect(result.bassNote).toBe(PC.D_FLAT);
-      expect(result.pitchClasses).toEqual([PC.D_FLAT, PC.G, PC.E]); // Db, G (dim5), E (Fb)
+      expect(result.root).toEqual(Note.D_FLAT);
+      expect(result.bass).toEqual(Note.D_FLAT);
+      expect(result.quality).toBe("diminished");
+      // Db dim = Db, Fb, Abb (correct theory spelling)
+      expect(result.chordTones).toEqual([
+        Note.D_FLAT,
+        Note.F_FLAT, // NOT E
+        N("A", -2),  // Abb, NOT G
+      ]);
     });
 
     test("Bdim returns B diminished triad", () => {
       const result = parseChord("Bdim");
-      expect(result.bassNote).toBe(PC.B);
-      expect(result.pitchClasses).toEqual([PC.B, PC.F, PC.D]); // B, F, D
+      expect(result.root).toEqual(Note.B);
+      expect(result.bass).toEqual(Note.B);
+      expect(result.quality).toBe("diminished");
+      expect(result.chordTones).toEqual([Note.B, Note.D, Note.F]);
+    });
+
+    test("F#dim returns F# diminished triad", () => {
+      const result = parseChord("F#dim");
+      expect(result.root).toEqual(Note.F_SHARP);
+      expect(result.bass).toEqual(Note.F_SHARP);
+      expect(result.quality).toBe("diminished");
+      expect(result.chordTones).toEqual([Note.F_SHARP, Note.A, Note.C]);
     });
   });
 
   describe("augmented triads", () => {
     test("Caug returns C augmented triad", () => {
       const result = parseChord("Caug");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G_SHARP, PC.E]); // root, aug fifth, major third
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("augmented");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G_SHARP]);
     });
 
     test("C+ returns C augmented triad", () => {
       const result = parseChord("C+");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G_SHARP, PC.E]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("augmented");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G_SHARP]);
     });
 
     test("Ebaug returns Eb augmented triad", () => {
       const result = parseChord("Ebaug");
-      expect(result.bassNote).toBe(PC.E_FLAT);
-      expect(result.pitchClasses).toEqual([PC.E_FLAT, PC.B, PC.G]); // Eb, B, G
+      expect(result.root).toEqual(Note.E_FLAT);
+      expect(result.bass).toEqual(Note.E_FLAT);
+      expect(result.quality).toBe("augmented");
+      expect(result.chordTones).toEqual([Note.E_FLAT, Note.G, Note.B]);
+    });
+
+    test("Faug returns F augmented triad", () => {
+      const result = parseChord("Faug");
+      expect(result.root).toEqual(Note.F);
+      expect(result.bass).toEqual(Note.F);
+      expect(result.quality).toBe("augmented");
+      // F aug = F, A, C# (augmented fifth is raised, spelled as sharp)
+      expect(result.chordTones).toEqual([Note.F, Note.A, Note.C_SHARP]);
     });
   });
 
-  describe("slash chords (inversions/alternate bass)", () => {
+  describe("slash chords (alternate bass)", () => {
     test("C/E returns C major with E bass", () => {
       const result = parseChord("C/E");
-      expect(result.bassNote).toBe(PC.E);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.E);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G]);
     });
 
     test("C/G returns C major with G bass", () => {
       const result = parseChord("C/G");
-      expect(result.bassNote).toBe(PC.G);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.G);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G]);
     });
 
     test("Dm/A returns D minor with A bass", () => {
       const result = parseChord("Dm/A");
-      expect(result.bassNote).toBe(PC.A);
-      expect(result.pitchClasses).toEqual([PC.D, PC.A, PC.F]); // D, A, F
+      expect(result.root).toEqual(Note.D);
+      expect(result.bass).toEqual(Note.A);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.D, Note.F, Note.A]);
     });
 
     test("Dbdim/G returns Db diminished with G bass", () => {
       const result = parseChord("Dbdim/G");
-      expect(result.bassNote).toBe(PC.G);
-      expect(result.pitchClasses).toEqual([PC.D_FLAT, PC.G, PC.E]); // Db, G (dim5), E (Fb)
+      expect(result.root).toEqual(Note.D_FLAT);
+      expect(result.bass).toEqual(Note.G);
+      expect(result.quality).toBe("diminished");
+      expect(result.chordTones).toEqual([Note.D_FLAT, Note.F_FLAT, N("A", -2)]);
     });
 
     test("F#m/C# returns F# minor with C# bass", () => {
       const result = parseChord("F#m/C#");
-      expect(result.bassNote).toBe(PC.C_SHARP);
-      expect(result.pitchClasses).toEqual([PC.F_SHARP, PC.C_SHARP, PC.A]); // F#, C#, A
+      expect(result.root).toEqual(Note.F_SHARP);
+      expect(result.bass).toEqual(Note.C_SHARP);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.F_SHARP, Note.A, Note.C_SHARP]);
     });
   });
 
   describe("seventh chords", () => {
     test("Cmaj7 returns C major seventh", () => {
       const result = parseChord("Cmaj7");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E, PC.B]); // root, fifth, third, seventh
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G, Note.B]);
     });
 
     test("CM7 returns C major seventh", () => {
       const result = parseChord("CM7");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E, PC.B]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G, Note.B]);
     });
 
     test("Dm7 returns D minor seventh", () => {
       const result = parseChord("Dm7");
-      expect(result.bassNote).toBe(PC.D);
-      expect(result.pitchClasses).toEqual([PC.D, PC.A, PC.F, PC.C]); // D, A, F, C
+      expect(result.root).toEqual(Note.D);
+      expect(result.bass).toEqual(Note.D);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.D, Note.F, Note.A, Note.C]);
     });
 
     test("Dmin7 returns D minor seventh", () => {
       const result = parseChord("Dmin7");
-      expect(result.bassNote).toBe(PC.D);
-      expect(result.pitchClasses).toEqual([PC.D, PC.A, PC.F, PC.C]);
+      expect(result.root).toEqual(Note.D);
+      expect(result.bass).toEqual(Note.D);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.D, Note.F, Note.A, Note.C]);
     });
 
     test("G7 returns G dominant seventh", () => {
       const result = parseChord("G7");
-      expect(result.bassNote).toBe(PC.G);
-      expect(result.pitchClasses).toEqual([PC.G, PC.D, PC.B, PC.F]); // G, D, B, F
+      expect(result.root).toEqual(Note.G);
+      expect(result.bass).toEqual(Note.G);
+      expect(result.quality).toBe("major"); // dominant 7 has major triad
+      expect(result.chordTones).toEqual([Note.G, Note.B, Note.D, Note.F]);
     });
 
     test("Bb7 returns Bb dominant seventh", () => {
       const result = parseChord("Bb7");
-      expect(result.bassNote).toBe(PC.B_FLAT);
-      expect(result.pitchClasses).toEqual([PC.B_FLAT, PC.F, PC.D, PC.A_FLAT]); // Bb, F, D, Ab
+      expect(result.root).toEqual(Note.B_FLAT);
+      expect(result.bass).toEqual(Note.B_FLAT);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.B_FLAT, Note.D, Note.F, Note.A_FLAT]);
     });
 
     test("Cdim7 returns C diminished seventh", () => {
       const result = parseChord("Cdim7");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G_FLAT, PC.E_FLAT, PC.A]); // root, dim5, min3, dim7
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("diminished");
+      // dim7 = root, m3, d5, d7 (which is a whole step below the root)
+      expect(result.chordTones).toEqual([
+        Note.C,
+        Note.E_FLAT,
+        Note.G_FLAT,
+        N("B", -2), // Bbb (diminished 7th)
+      ]);
     });
 
     test("Cm7b5 returns C half-diminished seventh", () => {
       const result = parseChord("Cm7b5");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G_FLAT, PC.E_FLAT, PC.B_FLAT]); // root, dim5, min3, min7
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("diminished"); // half-dim has dim triad
+      expect(result.chordTones).toEqual([Note.C, Note.E_FLAT, Note.G_FLAT, Note.B_FLAT]);
     });
 
-    test("F#maj7 returns F# major seventh", () => {
+    test("F#maj7 returns F# major seventh with E# spelling", () => {
       const result = parseChord("F#maj7");
-      expect(result.bassNote).toBe(PC.F_SHARP);
-      expect(result.pitchClasses).toEqual([PC.F_SHARP, PC.C_SHARP, PC.A_SHARP, PC.F]); // F#, C#, A#, E# (F)
+      expect(result.root).toEqual(Note.F_SHARP);
+      expect(result.bass).toEqual(Note.F_SHARP);
+      expect(result.quality).toBe("major");
+      // F#maj7 = F#, A#, C#, E# (NOT F!)
+      expect(result.chordTones).toEqual([
+        Note.F_SHARP,
+        Note.A_SHARP,
+        Note.C_SHARP,
+        Note.E_SHARP, // E#, preserving spelling
+      ]);
     });
 
-    test("Abm7 returns Ab minor seventh", () => {
+    test("Abm7 returns Ab minor seventh with Cb spelling", () => {
       const result = parseChord("Abm7");
-      expect(result.bassNote).toBe(PC.A_FLAT);
-      expect(result.pitchClasses).toEqual([PC.A_FLAT, PC.E_FLAT, PC.B, PC.G_FLAT]); // Ab, Eb, Cb (B), Gb
+      expect(result.root).toEqual(Note.A_FLAT);
+      expect(result.bass).toEqual(Note.A_FLAT);
+      expect(result.quality).toBe("minor");
+      // Abm7 = Ab, Cb, Eb, Gb (Cb NOT B!)
+      expect(result.chordTones).toEqual([
+        Note.A_FLAT,
+        Note.C_FLAT, // Cb, preserving spelling
+        Note.E_FLAT,
+        Note.G_FLAT,
+      ]);
     });
   });
 
   describe("ninth chords", () => {
     test("C9 returns C dominant ninth", () => {
       const result = parseChord("C9");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E, PC.B_FLAT, PC.D]); // root, 5, 3, 7, 9
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G, Note.B_FLAT, Note.D]);
     });
 
     test("Cmaj9 returns C major ninth", () => {
       const result = parseChord("Cmaj9");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E, PC.B, PC.D]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G, Note.B, Note.D]);
     });
 
     test("Cm9 returns C minor ninth", () => {
       const result = parseChord("Cm9");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E_FLAT, PC.B_FLAT, PC.D]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.C, Note.E_FLAT, Note.G, Note.B_FLAT, Note.D]);
     });
 
     test("Dm9 returns D minor ninth", () => {
       const result = parseChord("Dm9");
-      expect(result.bassNote).toBe(PC.D);
-      expect(result.pitchClasses).toEqual([PC.D, PC.A, PC.F, PC.C, PC.E]); // D, A, F, C, E
+      expect(result.root).toEqual(Note.D);
+      expect(result.bass).toEqual(Note.D);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.D, Note.F, Note.A, Note.C, Note.E]);
     });
 
     test("F#9 returns F# dominant ninth", () => {
       const result = parseChord("F#9");
-      expect(result.bassNote).toBe(PC.F_SHARP);
-      expect(result.pitchClasses).toEqual([PC.F_SHARP, PC.C_SHARP, PC.A_SHARP, PC.E, PC.G_SHARP]); // F#, C#, A#, E, G#
+      expect(result.root).toEqual(Note.F_SHARP);
+      expect(result.bass).toEqual(Note.F_SHARP);
+      expect(result.quality).toBe("major");
+      // F#9 = F#, A#, C#, E, G#
+      expect(result.chordTones).toEqual([
+        Note.F_SHARP,
+        Note.A_SHARP,
+        Note.C_SHARP,
+        Note.E, // dominant 7 is minor 7th interval
+        Note.G_SHARP,
+      ]);
     });
   });
 
   describe("eleventh chords", () => {
     test("C11 returns C dominant eleventh", () => {
       const result = parseChord("C11");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E, PC.B_FLAT, PC.D, PC.F]); // root, 5, 3, 7, 9, 11
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G, Note.B_FLAT, Note.D, Note.F]);
     });
 
     test("Cmaj11 returns C major eleventh", () => {
       const result = parseChord("Cmaj11");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E, PC.B, PC.D, PC.F]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([Note.C, Note.E, Note.G, Note.B, Note.D, Note.F]);
     });
 
     test("Cm11 returns C minor eleventh", () => {
       const result = parseChord("Cm11");
-      expect(result.bassNote).toBe(PC.C);
-      expect(result.pitchClasses).toEqual([PC.C, PC.G, PC.E_FLAT, PC.B_FLAT, PC.D, PC.F]);
+      expect(result.root).toEqual(Note.C);
+      expect(result.bass).toEqual(Note.C);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.C, Note.E_FLAT, Note.G, Note.B_FLAT, Note.D, Note.F]);
     });
 
     test("Gm11 returns G minor eleventh", () => {
       const result = parseChord("Gm11");
-      expect(result.bassNote).toBe(PC.G);
-      expect(result.pitchClasses).toEqual([PC.G, PC.D, PC.B_FLAT, PC.F, PC.A, PC.C]); // G, D, Bb, F, A, C
+      expect(result.root).toEqual(Note.G);
+      expect(result.bass).toEqual(Note.G);
+      expect(result.quality).toBe("minor");
+      expect(result.chordTones).toEqual([Note.G, Note.B_FLAT, Note.D, Note.F, Note.A, Note.C]);
     });
 
     test("Bb11 returns Bb dominant eleventh", () => {
       const result = parseChord("Bb11");
-      expect(result.bassNote).toBe(PC.B_FLAT);
-      expect(result.pitchClasses).toEqual([PC.B_FLAT, PC.F, PC.D, PC.A_FLAT, PC.C, PC.E_FLAT]); // Bb, F, D, Ab, C, Eb
+      expect(result.root).toEqual(Note.B_FLAT);
+      expect(result.bass).toEqual(Note.B_FLAT);
+      expect(result.quality).toBe("major");
+      expect(result.chordTones).toEqual([
+        Note.B_FLAT,
+        Note.D,
+        Note.F,
+        Note.A_FLAT,
+        Note.C,
+        Note.E_FLAT,
+      ]);
     });
   });
 
