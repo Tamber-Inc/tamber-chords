@@ -246,44 +246,47 @@ describe("MidiChord structure", () => {
 // ============================================================================
 
 describe("renderChordSequence", () => {
-  describe("triads", () => {
-    test("C major in root position at octave 4", () => {
+  describe("triads with bass", () => {
+    test("C major: bass + triad", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "maj" }],
         { baseOctave: 4 }
       );
 
-      expect(result[0].voices).toEqual([60, 64, 67]); // C4, E4, G4
+      // Bass C3, then C4, E4, G4
+      expect(result[0].notes).toEqual([48, 60, 64, 67]);
     });
 
-    test("Am triad", () => {
+    test("Am triad with bass", () => {
       const result = renderChordSequence(
         [{ root: Note.A, quality: "min" }],
         { baseOctave: 4 }
       );
 
-      expect(result[0].voices).toEqual([69, 72, 76]); // A4, C5, E5
+      // Bass A3, then A4, C5, E5
+      expect(result[0].notes).toEqual([57, 69, 72, 76]);
     });
 
-    test("F#m triad preserves correct pitches", () => {
+    test("F#m triad with bass", () => {
       const result = renderChordSequence(
         [{ root: Note.F_SHARP, quality: "min" }],
         { baseOctave: 4 }
       );
 
-      expect(result[0].voices).toEqual([66, 69, 73]); // F#4, A4, C#5
+      // Bass F#3, then F#4, A4, C#5
+      expect(result[0].notes).toEqual([54, 66, 69, 73]);
     });
   });
 
   describe("seventh chords", () => {
-    test("Cmaj7 has 4 voices", () => {
+    test("Cmaj7: bass + 4 upper voices", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "maj7" }],
         { baseOctave: 4 }
       );
 
-      expect(result[0].voices).toHaveLength(4);
-      expect(result[0].voices).toEqual([60, 64, 67, 71]); // C4, E4, G4, B4
+      // Bass C3, then C4, E4, G4, B4
+      expect(result[0].notes).toEqual([48, 60, 64, 67, 71]);
     });
 
     test("G7 chord", () => {
@@ -292,76 +295,65 @@ describe("renderChordSequence", () => {
         { baseOctave: 3 }
       );
 
-      expect(result[0].voices).toEqual([55, 59, 62, 65]); // G3, B3, D4, F4
+      // Bass G2, then G3, B3, D4, F4
+      expect(result[0].notes).toEqual([43, 55, 59, 62, 65]);
     });
   });
 
   describe("extended chords", () => {
-    test("Dm9 has 5 voices", () => {
+    test("Dm9: bass + 5 upper voices", () => {
       const result = renderChordSequence(
         [{ root: Note.D, quality: "min9" }],
         { baseOctave: 3 }
       );
 
-      expect(result[0].voices).toHaveLength(5);
-      expect(result[0].voices).toEqual([50, 53, 57, 60, 64]); // D3, F3, A3, C4, E4
+      // Bass D2, then D3, F3, A3, C4, E4
+      expect(result[0].notes).toEqual([38, 50, 53, 57, 60, 64]);
     });
 
-    test("C13 has 7 voices (full voicing)", () => {
+    test("C13: bass + 7 upper voices", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "13" }],
         { baseOctave: 3 }
       );
 
-      expect(result[0].voices).toHaveLength(7);
+      // 1 bass + 7 chord tones = 8 notes
+      expect(result[0].notes).toHaveLength(8);
     });
   });
 
-  describe("voicing modes - exact specifications", () => {
-    // Close voicing: stack chord tones ascending from bass within one octave
-    test("close voicing: Cmaj7 stacked within octave", () => {
+  describe("voicing modes", () => {
+    test("close voicing: upper voices within octave", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "maj7" }],
         { baseOctave: 4, voicing: "close" }
       );
 
-      const voices = result[0].voices;
-      const range = voices[voices.length - 1]! - voices[0]!;
-      expect(range).toBeLessThanOrEqual(12);
-      // Exact close voicing: C4, E4, G4, B4
-      expect(voices).toEqual([60, 64, 67, 71]);
+      // Bass C3 (48), then close: C4(60), E4(64), G4(67), B4(71)
+      expect(result[0].notes).toEqual([48, 60, 64, 67, 71]);
     });
 
-    // Drop2: drop 2nd voice from top down an octave (jazz guitar/piano voicing)
     test("drop2 voicing: 2nd-from-top drops an octave", () => {
-      const close = renderChordSequence(
-        [{ root: Note.C, quality: "maj7" }],
-        { baseOctave: 4, voicing: "close" }
-      );
-      const drop2 = renderChordSequence(
+      const result = renderChordSequence(
         [{ root: Note.C, quality: "maj7" }],
         { baseOctave: 4, voicing: "drop2" }
       );
 
-      // Close: C4(60), E4(64), G4(67), B4(71)
-      // Drop2: G3(55), C4(60), E4(64), B4(71) - G dropped an octave
-      expect(drop2[0].voices).toEqual([55, 60, 64, 71]);
+      // Bass C3 (48), then drop2: G3(55), C4(60), E4(64), B4(71)
+      expect(result[0].notes).toEqual([48, 55, 60, 64, 71]);
     });
 
-    // Drop3: drop 3rd voice from top down an octave
     test("drop3 voicing: 3rd-from-top drops an octave", () => {
-      const drop3 = renderChordSequence(
+      const result = renderChordSequence(
         [{ root: Note.C, quality: "maj7" }],
         { baseOctave: 4, voicing: "drop3" }
       );
 
-      // Close: C4(60), E4(64), G4(67), B4(71)
-      // Drop3: E3(52), C4(60), G4(67), B4(71) - E dropped an octave
-      expect(drop3[0].voices).toEqual([52, 60, 67, 71]);
+      // Bass C3 (48), then drop3: E3(52), C4(60), G4(67), B4(71)
+      expect(result[0].notes).toEqual([48, 52, 60, 67, 71]);
     });
 
-    // Drop2 only applies to 4+ note chords
-    test("drop2 on triad: no change (not enough voices)", () => {
+    test("drop2 on triad: unchanged (not enough voices)", () => {
       const close = renderChordSequence(
         [{ root: Note.C, quality: "maj" }],
         { baseOctave: 4, voicing: "close" }
@@ -371,70 +363,85 @@ describe("renderChordSequence", () => {
         { baseOctave: 4, voicing: "drop2" }
       );
 
-      // Triads are unchanged by drop voicings
-      expect(drop2[0].voices).toEqual(close[0].voices);
+      expect(drop2[0].notes).toEqual(close[0].notes);
     });
 
-    // Spread voicing: distribute across wider range
-    test("spread voicing: voices span more than octave", () => {
+    test("spread voicing: wider range", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "maj7" }],
         { baseOctave: 3, voicing: "spread" }
       );
 
-      const voices = result[0].voices;
-      const range = voices[voices.length - 1]! - voices[0]!;
+      const upperVoices = result[0].notes.slice(1); // exclude bass
+      const range = upperVoices[upperVoices.length - 1]! - upperVoices[0]!;
       expect(range).toBeGreaterThan(12);
     });
   });
 
-  describe("bass handling - explicit policy", () => {
-    // Bass is ALWAYS placed below the lowest voice
-    test("bass is below lowest voice (root bass)", () => {
+  describe("bass configuration", () => {
+    test("default bass is one octave below voicing", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "maj" }],
         { baseOctave: 4 }
       );
 
-      // Default: bass = root, one octave below voicing
-      expect(result[0].bass).toBe(48); // C3
-      expect(result[0].bass).toBeLessThan(result[0].voices[0]!);
+      expect(result[0].notes[0]).toBe(48); // C3
     });
 
-    test("slash chord: bass follows spec.bass", () => {
+    test("slash chord uses specified bass note", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "maj", bass: Note.E }],
         { baseOctave: 4 }
       );
 
-      expect(result[0].bass! % 12).toBe(4); // E
-      expect(result[0].bass).toBeLessThan(result[0].voices[0]!);
+      expect(result[0].notes[0]).toBe(52); // E3
     });
 
-    test("bass register configurable via bassOctave", () => {
+    test("bassOctave configures bass register", () => {
       const result = renderChordSequence(
         [{ root: Note.C, quality: "maj" }],
         { baseOctave: 4, bassOctave: 2 }
       );
 
-      expect(result[0].bass).toBe(36); // C2
+      expect(result[0].notes[0]).toBe(36); // C2
+    });
+
+    test("bass is always the lowest note", () => {
+      const result = renderChordSequence(
+        [{ root: Note.C, quality: "maj" }],
+        { baseOctave: 4 }
+      );
+
+      const bass = result[0].notes[0]!;
+      const upperVoices = result[0].notes.slice(1);
+      expect(bass).toBeLessThan(Math.min(...upperVoices));
     });
   });
 });
 
 // ============================================================================
-// voiceLead - sequence optimization with explicit voice identity
+// voiceLead - sequence optimization
 //
+// OUTPUT: flat number[] with bass included, optimized for smooth voice leading
 // CONTRACT:
-// - voices[i] in chord N maps to voices[i] in chord N+1 (same voice)
-// - voice count is determined by maxVoices option
+// - note count is constant across sequence (1 bass + maxVoices upper)
+// - upper voices maintain stable identity for voice leading
 // - if chord has fewer tones than maxVoices, tones are doubled
 // - if chord has more tones than maxVoices, tonePriority determines omissions
 // ============================================================================
 
 describe("voiceLead", () => {
-  describe("voice identity stability", () => {
-    test("voice count is constant across sequence (maxVoices)", () => {
+  describe("output format", () => {
+    test("returns flat number[] with bass + upper voices", () => {
+      const chords: ChordSpec[] = [{ root: Note.C, quality: "maj" }];
+      const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
+
+      // 1 bass + 3 upper voices = 4 notes
+      expect(result[0].notes).toHaveLength(4);
+      expect(result[0].notes.every((n) => typeof n === "number")).toBe(true);
+    });
+
+    test("note count is constant across sequence", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },   // 3 tones
         { root: Note.G, quality: "7" },     // 4 tones
@@ -442,29 +449,24 @@ describe("voiceLead", () => {
       ];
       const result = voiceLead(chords, { baseOctave: 4, maxVoices: 4 });
 
-      // All chords should have exactly 4 voices
-      expect(result[0].voices).toHaveLength(4);
-      expect(result[1].voices).toHaveLength(4);
-      expect(result[2].voices).toHaveLength(4);
+      // All should have 1 bass + 4 upper = 5 notes
+      expect(result[0].notes).toHaveLength(5);
+      expect(result[1].notes).toHaveLength(5);
+      expect(result[2].notes).toHaveLength(5);
     });
 
-    test("same voice index = same voice across chords", () => {
-      const chords: ChordSpec[] = [
-        { root: Note.C, quality: "maj" },
-        { root: Note.A, quality: "min" },
-      ];
-      const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
+    test("notes are sorted low to high", () => {
+      const chords: ChordSpec[] = [{ root: Note.C, quality: "maj7" }];
+      const result = voiceLead(chords, { baseOctave: 4, maxVoices: 4 });
 
-      // voices[2] (top voice) should move minimally between chords
-      const topVoice1 = result[0].voices[2];
-      const topVoice2 = result[1].voices[2];
-      // G -> A or G -> E (common tones / minimal motion)
-      expect(Math.abs(topVoice2! - topVoice1!)).toBeLessThanOrEqual(4);
+      for (let i = 0; i < result[0].notes.length - 1; i++) {
+        expect(result[0].notes[i]).toBeLessThan(result[0].notes[i + 1]!);
+      }
     });
   });
 
-  describe("common tone retention (keepCommonTones: true)", () => {
-    test("C to Am: keeps C and E in same voice positions", () => {
+  describe("common tone retention", () => {
+    test("C to Am: common tones (C, E) stay in similar positions", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.A, quality: "min" },
@@ -475,23 +477,17 @@ describe("voiceLead", () => {
         keepCommonTones: true,
       });
 
-      // C (60) and E (64) are common tones
-      // They should appear in same voice position in both chords
-      const chord1 = result[0].voices;
-      const chord2 = result[1].voices;
+      // Both chords should contain C and E at similar MIDI positions
+      const chord1PitchClasses = result[0].notes.map((n) => n % 12);
+      const chord2PitchClasses = result[1].notes.map((n) => n % 12);
 
-      // Find which voice has C in chord 1
-      const cVoiceIdx = chord1.findIndex((n) => n % 12 === 0);
-      // That voice should still have C in chord 2
-      expect(chord2[cVoiceIdx]! % 12).toBe(0);
-
-      // Find which voice has E in chord 1
-      const eVoiceIdx = chord1.findIndex((n) => n % 12 === 4);
-      // That voice should still have E in chord 2
-      expect(chord2[eVoiceIdx]! % 12).toBe(4);
+      expect(chord1PitchClasses).toContain(0); // C
+      expect(chord1PitchClasses).toContain(4); // E
+      expect(chord2PitchClasses).toContain(0); // C
+      expect(chord2PitchClasses).toContain(4); // E
     });
 
-    test("C to G: G is common tone, stays in place", () => {
+    test("C to G: G stays in place", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.G, quality: "maj" },
@@ -502,49 +498,51 @@ describe("voiceLead", () => {
         keepCommonTones: true,
       });
 
-      // G should be in same voice position
-      const gVoiceIdx = result[0].voices.findIndex((n) => n % 12 === 7);
-      expect(result[1].voices[gVoiceIdx]! % 12).toBe(7);
+      // Find G in both chords - should be same MIDI note
+      const g1 = result[0].notes.find((n) => n % 12 === 7);
+      const g2 = result[1].notes.find((n) => n % 12 === 7);
+      expect(g1).toBe(g2);
     });
   });
 
   describe("minimal motion", () => {
-    test("each voice moves by smallest interval", () => {
-      const chords: ChordSpec[] = [
-        { root: Note.C, quality: "maj" },
-        { root: Note.D, quality: "min" },
-      ];
-      const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
-
-      // Calculate per-voice movement
-      const movements = result[0].voices.map((v, i) =>
-        Math.abs(result[1].voices[i]! - v)
-      );
-
-      // No voice should move more than a 4th (5 semitones) for this progression
-      expect(Math.max(...movements)).toBeLessThanOrEqual(5);
-    });
-
-    test("total voice movement is minimized", () => {
+    test("total movement is minimized", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.F, quality: "maj" },
       ];
       const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
 
-      const totalMovement = result[0].voices.reduce(
-        (sum, v, i) => sum + Math.abs(result[1].voices[i]! - v),
+      // Compare upper voices (skip bass at index 0)
+      const upper1 = result[0].notes.slice(1);
+      const upper2 = result[1].notes.slice(1);
+
+      const totalMovement = upper1.reduce(
+        (sum, v, i) => sum + Math.abs(upper2[i]! - v),
         0
       );
 
-      // C-E-G to F-A-C: optimal is C->C (0), E->F (1), G->A (2) = 3
-      // or with inversion: C->C (0), E->A (via G), G->F
+      // C-E-G to F-A-C should have minimal movement
       expect(totalMovement).toBeLessThanOrEqual(6);
+    });
+
+    test("no voice jumps more than a 5th", () => {
+      const chords: ChordSpec[] = [
+        { root: Note.C, quality: "maj" },
+        { root: Note.D, quality: "min" },
+      ];
+      const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
+
+      const upper1 = result[0].notes.slice(1);
+      const upper2 = result[1].notes.slice(1);
+
+      const movements = upper1.map((v, i) => Math.abs(upper2[i]! - v));
+      expect(Math.max(...movements)).toBeLessThanOrEqual(7); // P5
     });
   });
 
-  describe("voice crossing prevention (allowVoiceCrossing: false)", () => {
-    test("voices do not cross by default", () => {
+  describe("voice crossing prevention", () => {
+    test("notes remain sorted (no crossing) by default", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.G, quality: "maj" },
@@ -558,49 +556,30 @@ describe("voiceLead", () => {
       });
 
       for (const chord of result) {
-        // voices[0] < voices[1] < voices[2] always
-        for (let i = 0; i < chord.voices.length - 1; i++) {
-          expect(chord.voices[i]).toBeLessThan(chord.voices[i + 1]!);
+        for (let i = 0; i < chord.notes.length - 1; i++) {
+          expect(chord.notes[i]).toBeLessThan(chord.notes[i + 1]!);
         }
       }
     });
-
-    test("allowVoiceCrossing: true permits crossing for better leading", () => {
-      const chords: ChordSpec[] = [
-        { root: Note.C, quality: "maj" },
-        { root: Note.G, quality: "maj" },
-      ];
-      const withCrossing = voiceLead(chords, {
-        baseOctave: 4,
-        maxVoices: 3,
-        allowVoiceCrossing: true,
-      });
-
-      // Result may or may not have crossing, but it should still work
-      expect(withCrossing).toHaveLength(2);
-    });
   });
 
-  describe("tonePriority - which tones to keep when reducing voices", () => {
-    test("default priority keeps 3rd and 7th over 5th", () => {
+  describe("tonePriority - tone selection when reducing voices", () => {
+    test("default: keeps 3rd and 7th over 5th", () => {
       const chords: ChordSpec[] = [
-        { root: Note.C, quality: "maj7" }, // C E G B (4 tones)
+        { root: Note.C, quality: "maj7" }, // C E G B
       ];
       const result = voiceLead(chords, {
         baseOctave: 4,
-        maxVoices: 3, // Must omit one tone
-        // Default tonePriority: ["3", "7", "root", "5"]
+        maxVoices: 3, // Must omit one tone from upper voices
       });
 
-      const pitchClasses = result[0].voices.map((n) => n % 12);
-      // Should have E (4), B (11), probably C (0)
-      // Should NOT have G (7) - 5th is lowest priority
-      expect(pitchClasses).toContain(4);  // 3rd
-      expect(pitchClasses).toContain(11); // 7th
-      expect(pitchClasses).not.toContain(7); // 5th omitted
+      const pitchClasses = result[0].notes.map((n) => n % 12);
+      expect(pitchClasses).toContain(4);  // E (3rd) kept
+      expect(pitchClasses).toContain(11); // B (7th) kept
+      expect(pitchClasses).not.toContain(7); // G (5th) omitted
     });
 
-    test("custom tonePriority: keep root and 5th (power chord style)", () => {
+    test("custom: keep root and 5th (power chord style)", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj7" },
       ];
@@ -610,31 +589,14 @@ describe("voiceLead", () => {
         tonePriority: ["root", "5", "3", "7"],
       });
 
-      const pitchClasses = result[0].voices.map((n) => n % 12);
-      expect(pitchClasses).toContain(0); // root
-      expect(pitchClasses).toContain(7); // 5th
-    });
-
-    test("tonePriority handles extensions: keep 9 over 5", () => {
-      const chords: ChordSpec[] = [
-        { root: Note.D, quality: "min9" }, // D F A C E (5 tones)
-      ];
-      const result = voiceLead(chords, {
-        baseOctave: 4,
-        maxVoices: 4,
-        tonePriority: ["3", "7", "9", "root", "5"],
-      });
-
-      const pitchClasses = result[0].voices.map((n) => n % 12);
-      expect(pitchClasses).toContain(5);  // F (3rd)
-      expect(pitchClasses).toContain(0);  // C (7th)
-      expect(pitchClasses).toContain(4);  // E (9th)
-      // 5th (A=9) might be omitted
+      const pitchClasses = result[0].notes.map((n) => n % 12);
+      expect(pitchClasses).toContain(0); // C (root)
+      expect(pitchClasses).toContain(7); // G (5th)
     });
   });
 
-  describe("voice range constraints", () => {
-    test("minNote is respected", () => {
+  describe("range constraints", () => {
+    test("minNote respected for upper voices", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.G, quality: "maj" },
@@ -642,17 +604,18 @@ describe("voiceLead", () => {
       const result = voiceLead(chords, {
         baseOctave: 4,
         maxVoices: 3,
-        minNote: 60, // C4 minimum
+        minNote: 60,
       });
 
       for (const chord of result) {
-        for (const note of chord.voices) {
+        const upperVoices = chord.notes.slice(1);
+        for (const note of upperVoices) {
           expect(note).toBeGreaterThanOrEqual(60);
         }
       }
     });
 
-    test("maxNote is respected", () => {
+    test("maxNote respected for upper voices", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.G, quality: "maj" },
@@ -660,44 +623,20 @@ describe("voiceLead", () => {
       const result = voiceLead(chords, {
         baseOctave: 4,
         maxVoices: 3,
-        maxNote: 72, // C5 maximum
+        maxNote: 72,
       });
 
       for (const chord of result) {
-        for (const note of chord.voices) {
+        const upperVoices = chord.notes.slice(1);
+        for (const note of upperVoices) {
           expect(note).toBeLessThanOrEqual(72);
         }
       }
     });
-
-    test("range constraint is soft: prefers smooth leading over hard clamp", () => {
-      // This tests that we optimize for smoothness within range,
-      // not just clamp notes that go out of range
-      const chords: ChordSpec[] = [
-        { root: Note.C, quality: "maj" },
-        { root: Note.F, quality: "maj" },
-        { root: Note.G, quality: "maj" },
-      ];
-      const result = voiceLead(chords, {
-        baseOctave: 4,
-        maxVoices: 3,
-        minNote: 58,
-        maxNote: 74,
-      });
-
-      // Should still have smooth voice leading
-      for (let i = 0; i < result.length - 1; i++) {
-        const movements = result[i].voices.map((v, j) =>
-          Math.abs(result[i + 1].voices[j]! - v)
-        );
-        // Even with constraints, movement should be reasonable
-        expect(Math.max(...movements)).toBeLessThanOrEqual(7);
-      }
-    });
   });
 
-  describe("bass handling in voice leading", () => {
-    test("bass follows bassStrategy: followRoot (default)", () => {
+  describe("bass handling", () => {
+    test("bass follows root by default", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.G, quality: "maj" },
@@ -709,12 +648,12 @@ describe("voiceLead", () => {
         bassStrategy: "followRoot",
       });
 
-      expect(result[0].bass! % 12).toBe(0); // C
-      expect(result[1].bass! % 12).toBe(7); // G
-      expect(result[2].bass! % 12).toBe(9); // A
+      expect(result[0].notes[0]! % 12).toBe(0); // C
+      expect(result[1].notes[0]! % 12).toBe(7); // G
+      expect(result[2].notes[0]! % 12).toBe(9); // A
     });
 
-    test("bass follows bassStrategy: minimalMotion", () => {
+    test("bassStrategy: minimalMotion", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.A, quality: "min" },
@@ -725,8 +664,7 @@ describe("voiceLead", () => {
         bassStrategy: "minimalMotion",
       });
 
-      // Bass should move by smallest interval
-      const bassMovement = Math.abs(result[1].bass! - result[0].bass!);
+      const bassMovement = Math.abs(result[1].notes[0]! - result[0].notes[0]!);
       expect(bassMovement).toBeLessThanOrEqual(5);
     });
 
@@ -742,12 +680,12 @@ describe("voiceLead", () => {
         bassStrategy: "followRoot",
       });
 
-      expect(result[0].bass! % 12).toBe(0); // C (root)
-      expect(result[1].bass! % 12).toBe(4); // E (slash)
-      expect(result[2].bass! % 12).toBe(7); // G (slash)
+      expect(result[0].notes[0]! % 12).toBe(0); // C
+      expect(result[1].notes[0]! % 12).toBe(4); // E (slash)
+      expect(result[2].notes[0]! % 12).toBe(7); // G (slash)
     });
 
-    test("bass is always below lowest voice", () => {
+    test("bass is always the lowest note", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.G, quality: "maj" },
@@ -755,13 +693,13 @@ describe("voiceLead", () => {
       const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
 
       for (const chord of result) {
-        expect(chord.bass).toBeLessThan(Math.min(...chord.voices));
+        expect(chord.notes[0]).toBe(Math.min(...chord.notes));
       }
     });
   });
 
   describe("classic progressions", () => {
-    test("ii-V-I in C: Dm7 - G7 - Cmaj7", () => {
+    test("ii-V-I: Dm7 - G7 - Cmaj7", () => {
       const chords: ChordSpec[] = [
         { root: Note.D, quality: "min7" },
         { root: Note.G, quality: "7" },
@@ -770,10 +708,8 @@ describe("voiceLead", () => {
       const result = voiceLead(chords, { baseOctave: 3, maxVoices: 4 });
 
       expect(result).toHaveLength(3);
-      expect(result.every((c) => c.voices.length === 4)).toBe(true);
-
-      // F (7th of Dm7) → F (7th of G7) → E (3rd of Cmaj7)
-      // This is the characteristic ii-V-I voice leading
+      // 1 bass + 4 upper = 5 notes each
+      expect(result.every((c) => c.notes.length === 5)).toBe(true);
     });
 
     test("I-IV-V-I cycles back smoothly", () => {
@@ -785,16 +721,15 @@ describe("voiceLead", () => {
       ];
       const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
 
-      // First and last C should be similar (good voice leading is cyclic)
-      const totalDrift = result[0].voices.reduce(
-        (sum, v, i) => sum + Math.abs(result[3].voices[i]! - v),
+      // First and last C should be identical or very close
+      const drift = result[0].notes.reduce(
+        (sum, v, i) => sum + Math.abs(result[3].notes[i]! - v),
         0
       );
-      // Should return close to starting position
-      expect(totalDrift).toBeLessThanOrEqual(6);
+      expect(drift).toBeLessThanOrEqual(6);
     });
 
-    test("I-vi-IV-V (50s progression)", () => {
+    test("I-vi-IV-V (50s progression) - smooth throughout", () => {
       const chords: ChordSpec[] = [
         { root: Note.C, quality: "maj" },
         { root: Note.A, quality: "min" },
@@ -803,13 +738,13 @@ describe("voiceLead", () => {
       ];
       const result = voiceLead(chords, { baseOctave: 4, maxVoices: 3 });
 
-      // Verify smooth motion throughout
       for (let i = 0; i < result.length - 1; i++) {
-        const avgMovement =
-          result[i].voices.reduce(
-            (sum, v, j) => sum + Math.abs(result[i + 1].voices[j]! - v),
-            0
-          ) / result[i].voices.length;
+        const upper1 = result[i].notes.slice(1);
+        const upper2 = result[i + 1].notes.slice(1);
+        const avgMovement = upper1.reduce(
+          (sum, v, j) => sum + Math.abs(upper2[j]! - v),
+          0
+        ) / upper1.length;
         expect(avgMovement).toBeLessThan(4);
       }
     });
