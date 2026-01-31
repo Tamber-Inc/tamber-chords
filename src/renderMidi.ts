@@ -329,14 +329,11 @@ function findOptimalAssignment(
   maxNote: number,
   anchorCenter?: number
 ): number[] {
-  // For each previous voice, find the closest target pitch class
-  // Use a greedy assignment that minimizes total movement
+  // Assign voices to targets minimizing total movement
   // IMPORTANT: Ensure no duplicate MIDI values in output
-  // When costs are equal, prefer notes closer to anchorCenter to prevent drift
 
   const numVoices = previousVoices.length;
-  const assignments: number[] = new Array(numVoices).fill(-1);
-  const usedTargets = new Set<number>();
+  const numTargets = targetPitchClasses.length;
   const usedMidiNotes = new Set<number>();
 
   // Calculate anchor center from previous voices if not provided
@@ -355,80 +352,100 @@ function findOptimalAssignment(
     return candidates;
   }
 
-  // For each voice, find the best target
-  type Move = {
-    voiceIdx: number;
-    targetIdx: number;
-    midi: number;
-    cost: number;
-    drift: number;
-  };
-  const allMoves: Move[] = [];
+  // For each target pitch class, find all candidate MIDI notes
+  const targetCandidates: number[][] = targetPitchClasses.map((pc) =>
+    getCandidates(pc)
+  );
 
-  for (let v = 0; v < numVoices; v++) {
-    const prevNote = previousVoices[v]!;
-    for (let t = 0; t < targetPitchClasses.length; t++) {
-      const pc = targetPitchClasses[t]!;
-      for (const midi of getCandidates(pc)) {
-        allMoves.push({
-          voiceIdx: v,
-          targetIdx: t,
-          midi,
-          cost: Math.abs(midi - prevNote),
-          drift: Math.abs(midi - center), // Distance from center for tiebreaking
-        });
+  // Strategy: find the best MIDI note for each target, then assign targets to voices
+  // by matching based on relative position (lowest voice gets lowest target, etc.)
+
+  // First, find the best MIDI for each target (closest to center to prevent drift)
+  const bestMidiPerTarget: number[] = [];
+  for (let t = 0; t < numTargets; t++) {
+    const candidates = targetCandidates[t]!;
+    let bestMidi = candidates[0]!;
+    let bestDist = Math.abs(bestMidi - center);
+
+    for (const midi of candidates) {
+      const dist = Math.abs(midi - center);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestMidi = midi;
       }
+    }
+    bestMidiPerTarget.push(bestMidi);
+  }
+
+  // Sort target indices by their best MIDI value
+  const sortedTargetIndices = [...Array(numTargets).keys()].sort(
+    (a, b) => bestMidiPerTarget[a]! - bestMidiPerTarget[b]!
+  );
+
+  // Sort voice indices by previous note value
+  const sortedVoiceIndices = [...Array(numVoices).keys()].sort(
+    (a, b) => previousVoices[a]! - previousVoices[b]!
+  );
+
+  // Assign: lowest voice gets lowest target, etc.
+  const assignments: number[] = new Array(numVoices).fill(-1);
+
+  for (let i = 0; i < Math.min(numVoices, numTargets); i++) {
+    const voiceIdx = sortedVoiceIndices[i]!;
+    const targetIdx = sortedTargetIndices[i]!;
+    const prevNote = previousVoices[voiceIdx]!;
+
+    // Find the closest available MIDI for this target to the previous note
+    let bestMidi = -1;
+    let bestCost = Infinity;
+
+    for (const midi of targetCandidates[targetIdx]!) {
+      if (usedMidiNotes.has(midi)) continue;
+      const cost = Math.abs(midi - prevNote);
+      if (cost < bestCost) {
+        bestCost = cost;
+        bestMidi = midi;
+      }
+    }
+
+    if (bestMidi !== -1) {
+      assignments[voiceIdx] = bestMidi;
+      usedMidiNotes.add(bestMidi);
     }
   }
 
-  // Sort by cost, then by drift (prefer notes closer to center when costs are equal)
-  allMoves.sort((a, b) => {
-    if (a.cost !== b.cost) return a.cost - b.cost;
-    return a.drift - b.drift;
-  });
+  // Handle remaining voices (doubling)
+  for (let i = numTargets; i < numVoices; i++) {
+    const voiceIdx = sortedVoiceIndices[i]!;
+    const prevNote = previousVoices[voiceIdx]!;
 
-  // Greedy assignment - ensure unique MIDI notes
-  const assignedVoices = new Set<number>();
+    let bestMidi = -1;
+    let bestCost = Infinity;
 
-  for (const move of allMoves) {
-    if (assignedVoices.has(move.voiceIdx)) continue;
-    if (usedTargets.has(move.targetIdx)) continue;
-    if (usedMidiNotes.has(move.midi)) continue; // Ensure unique MIDI
-
-    assignments[move.voiceIdx] = move.midi;
-    assignedVoices.add(move.voiceIdx);
-    usedTargets.add(move.targetIdx);
-    usedMidiNotes.add(move.midi);
-
-    if (assignedVoices.size === numVoices) break;
-  }
-
-  // Handle any remaining voices (if targets < voices, need to double at different octave)
-  for (let v = 0; v < numVoices; v++) {
-    if (assignments[v] === -1) {
-      // Find closest available target that's not already used
-      const prevNote = previousVoices[v]!;
-      let bestMidi = -1;
-      let bestCost = Infinity;
-
-      for (const pc of targetPitchClasses) {
-        for (const midi of getCandidates(pc)) {
-          if (usedMidiNotes.has(midi)) continue; // Must be unique
-          const cost = Math.abs(midi - prevNote);
-          if (cost < bestCost) {
-            bestCost = cost;
-            bestMidi = midi;
-          }
+    for (const candidates of targetCandidates) {
+      for (const midi of candidates) {
+        if (usedMidiNotes.has(midi)) continue;
+        const cost = Math.abs(midi - prevNote);
+        if (cost < bestCost) {
+          bestCost = cost;
+          bestMidi = midi;
         }
       }
+    }
 
-      if (bestMidi !== -1) {
-        assignments[v] = bestMidi;
-        usedMidiNotes.add(bestMidi);
-      } else {
-        // Fallback: use the previous note if nothing available
-        assignments[v] = prevNote;
-      }
+    if (bestMidi !== -1) {
+      assignments[voiceIdx] = bestMidi;
+      usedMidiNotes.add(bestMidi);
+    } else {
+      // Fallback
+      assignments[voiceIdx] = prevNote;
+    }
+  }
+
+  // Fill any remaining unassigned voices
+  for (let v = 0; v < numVoices; v++) {
+    if (assignments[v] === -1) {
+      assignments[v] = previousVoices[v]!;
     }
   }
 
