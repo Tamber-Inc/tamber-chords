@@ -330,10 +330,12 @@ function findOptimalAssignment(
 ): number[] {
   // For each previous voice, find the closest target pitch class
   // Use a greedy assignment that minimizes total movement
+  // IMPORTANT: Ensure no duplicate MIDI values in output
 
   const numVoices = previousVoices.length;
   const assignments: number[] = new Array(numVoices).fill(-1);
   const usedTargets = new Set<number>();
+  const usedMidiNotes = new Set<number>();
 
   // Generate all possible target notes (all octaves in range) for each pitch class
   function getCandidates(pc: number): number[] {
@@ -368,30 +370,33 @@ function findOptimalAssignment(
   // Sort by cost
   allMoves.sort((a, b) => a.cost - b.cost);
 
-  // Greedy assignment
+  // Greedy assignment - ensure unique MIDI notes
   const assignedVoices = new Set<number>();
 
   for (const move of allMoves) {
     if (assignedVoices.has(move.voiceIdx)) continue;
     if (usedTargets.has(move.targetIdx)) continue;
+    if (usedMidiNotes.has(move.midi)) continue; // Ensure unique MIDI
 
     assignments[move.voiceIdx] = move.midi;
     assignedVoices.add(move.voiceIdx);
     usedTargets.add(move.targetIdx);
+    usedMidiNotes.add(move.midi);
 
     if (assignedVoices.size === numVoices) break;
   }
 
-  // Handle any remaining voices (if targets < voices, need to double)
+  // Handle any remaining voices (if targets < voices, need to double at different octave)
   for (let v = 0; v < numVoices; v++) {
     if (assignments[v] === -1) {
-      // Find closest available target (can reuse pitch classes)
+      // Find closest available target that's not already used
       const prevNote = previousVoices[v]!;
-      let bestMidi = prevNote;
+      let bestMidi = -1;
       let bestCost = Infinity;
 
       for (const pc of targetPitchClasses) {
         for (const midi of getCandidates(pc)) {
+          if (usedMidiNotes.has(midi)) continue; // Must be unique
           const cost = Math.abs(midi - prevNote);
           if (cost < bestCost) {
             bestCost = cost;
@@ -399,7 +404,14 @@ function findOptimalAssignment(
           }
         }
       }
-      assignments[v] = bestMidi;
+
+      if (bestMidi !== -1) {
+        assignments[v] = bestMidi;
+        usedMidiNotes.add(bestMidi);
+      } else {
+        // Fallback: use the previous note if nothing available
+        assignments[v] = prevNote;
+      }
     }
   }
 
