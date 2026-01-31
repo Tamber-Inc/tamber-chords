@@ -30,5 +30,8 @@
   },
   "trustedDependencies": [
     "@jazzer.js/fuzzer"
-  ]
+  ],
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
 }
