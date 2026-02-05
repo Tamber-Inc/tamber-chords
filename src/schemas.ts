@@ -257,6 +257,45 @@ export function createResultSchema<T extends z.ZodType>(valueSchema: T) {
   ]);
 }
 
+// ============================================================================
+// Chord Progression Rendering
+// ============================================================================
+
+export const ChordEventSchema = z.object({
+  chord: ChordSpecSchema,
+  onset_time: z.number().min(0),
+});
+export type ChordEvent = z.infer<typeof ChordEventSchema>;
+
+export const ActivationSchema = z.object({
+  onset_time: z.number().min(0),
+  duration: z.number().positive(),
+});
+export type Activation = z.infer<typeof ActivationSchema>;
+
+export const ClipNoteSchema = z.object({
+  pitch: z.number().int().min(0).max(127),
+  start_time: z.number().min(0),
+  duration: z.number().positive(),
+  velocity: z.number().int().min(1).max(127),
+});
+export type ClipNote = z.infer<typeof ClipNoteSchema>;
+
+export const RenderProgressionInputSchema = z.object({
+  chords: z.array(ChordEventSchema).min(1),
+  activations: z.array(ActivationSchema).min(1),
+  baseOctave: z.number().int().min(0).max(8).optional(),
+  maxVoices: z.number().int().min(1).optional(),
+  velocity: z.number().int().min(1).max(127).optional(),
+});
+export type RenderProgressionInput = z.infer<typeof RenderProgressionInputSchema>;
+
+export const RenderProgressionOutputSchema = z.object({
+  notes: z.array(ClipNoteSchema),
+  totalBeats: z.number(),
+});
+export type RenderProgressionOutput = z.infer<typeof RenderProgressionOutputSchema>;
+
 // Common result schemas
 export const ChordResultSchema = createResultSchema(ChordSchema);
 export type ChordResult = z.infer<typeof ChordResultSchema>;
