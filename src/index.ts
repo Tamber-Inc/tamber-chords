@@ -19,6 +19,8 @@ export {
   renderChordSequence,
   voiceLead,
   toPerformanceOutput,
+  transposeNote,
+  transposeChords,
 } from "./renderMidi";
 
 export type { Result } from "./buildChord";
