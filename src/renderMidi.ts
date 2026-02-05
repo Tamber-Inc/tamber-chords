@@ -86,6 +86,37 @@ const DEGREE_TO_INTERVAL: Record<TonePriorityDegree, number> = {
   root: 1, "3": 3, "5": 5, "7": 7, "9": 9, "11": 11, "13": 13,
 };
 
+const mod = (n: number, m: number) => ((n % m) + m) % m;
+
+export function transposeNote(
+  note: NoteName,
+  semitones: number,
+  strategy: SpellingStrategy = "sharps"
+): NoteName {
+  const pitchClass = toPitchClass(note);
+  const newPitchClass = mod(pitchClass + semitones, 12);
+
+  return strategy === "sharps"
+    ? SHARP_SPELLINGS[newPitchClass]!
+    : FLAT_SPELLINGS[newPitchClass]!;
+}
+
+/**
+ * Transpose all chords in a progression by a number of semitones.
+ * Transposes both root notes and bass notes (if present).
+ */
+export function transposeChords(
+  chords: ChordSpec[],
+  semitones: number,
+  strategy: SpellingStrategy = "sharps"
+): ChordSpec[] {
+  return chords.map((chord) => ({
+    ...chord,
+    root: transposeNote(chord.root, semitones, strategy),
+    bass: chord.bass ? transposeNote(chord.bass, semitones, strategy) : undefined,
+  }));
+}
+
 // ============================================================================
 // noteToMidi - pitch conversion
 // ============================================================================

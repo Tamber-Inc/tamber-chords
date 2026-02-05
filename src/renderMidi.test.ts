@@ -5,6 +5,8 @@ import {
   midiToSpelling,
   voiceLead,
   toPerformanceOutput,
+  transposeNote,
+  transposeChords,
 } from "./renderMidi";
 import { Note } from "./noteName";
 import type { ChordSpec } from "./buildChord";
@@ -167,6 +169,235 @@ describe("midiToSpelling", () => {
       const spelling = midiToSpelling(midi);
       expect(spelling.note.letter).toBe("B");
       expect(spelling.octave).toBe(3);
+    });
+  });
+});
+
+// ============================================================================
+// transposeNote - transpose a note by semitones
+// ============================================================================
+
+describe("transposeNote", () => {
+  describe("transposing up", () => {
+    test("C up 1 semitone = C# (sharps)", () => {
+      const result = transposeNote(Note.C, 1, "sharps");
+      expect(result.letter).toBe("C");
+      expect(result.accidental).toBe(1);
+    });
+
+    test("C up 1 semitone = Db (flats)", () => {
+      const result = transposeNote(Note.C, 1, "flats");
+      expect(result.letter).toBe("D");
+      expect(result.accidental).toBe(-1);
+    });
+
+    test("C up 7 semitones = G", () => {
+      const result = transposeNote(Note.C, 7);
+      expect(result.letter).toBe("G");
+      expect(result.accidental).toBe(0);
+    });
+
+    test("C up 12 semitones = C (octave)", () => {
+      const result = transposeNote(Note.C, 12);
+      expect(result.letter).toBe("C");
+      expect(result.accidental).toBe(0);
+    });
+
+    test("F# up 2 semitones = G# (sharps)", () => {
+      const result = transposeNote(Note.F_SHARP, 2, "sharps");
+      expect(result.letter).toBe("G");
+      expect(result.accidental).toBe(1);
+    });
+
+    test("Bb up 3 semitones = Db (flats)", () => {
+      const result = transposeNote(Note.B_FLAT, 3, "flats");
+      expect(result.letter).toBe("D");
+      expect(result.accidental).toBe(-1);
+    });
+  });
+
+  describe("transposing down (negative semitones)", () => {
+    test("C down 1 semitone = B", () => {
+      const result = transposeNote(Note.C, -1);
+      expect(result.letter).toBe("B");
+      expect(result.accidental).toBe(0);
+    });
+
+    test("C down 5 semitones = G", () => {
+      const result = transposeNote(Note.C, -5);
+      expect(result.letter).toBe("G");
+      expect(result.accidental).toBe(0);
+    });
+
+    test("E down 1 semitone = D# (sharps)", () => {
+      const result = transposeNote(Note.E, -1, "sharps");
+      expect(result.letter).toBe("D");
+      expect(result.accidental).toBe(1);
+    });
+
+    test("E down 1 semitone = Eb (flats)", () => {
+      const result = transposeNote(Note.E, -1, "flats");
+      expect(result.letter).toBe("E");
+      expect(result.accidental).toBe(-1);
+    });
+
+    test("C down 12 semitones = C (octave)", () => {
+      const result = transposeNote(Note.C, -12);
+      expect(result.letter).toBe("C");
+      expect(result.accidental).toBe(0);
+    });
+  });
+
+  describe("default strategy is sharps", () => {
+    test("C up 6 semitones = F# (default)", () => {
+      const result = transposeNote(Note.C, 6);
+      expect(result.letter).toBe("F");
+      expect(result.accidental).toBe(1);
+    });
+  });
+
+  describe("edge cases", () => {
+    test("zero transposition returns same pitch class", () => {
+      const result = transposeNote(Note.G, 0);
+      expect(result.letter).toBe("G");
+      expect(result.accidental).toBe(0);
+    });
+
+    test("large transposition wraps correctly", () => {
+      const result = transposeNote(Note.C, 25); // 2 octaves + 1
+      expect(result.letter).toBe("C");
+      expect(result.accidental).toBe(1);
+    });
+
+    test("large negative transposition wraps correctly", () => {
+      const result = transposeNote(Note.C, -25); // -2 octaves - 1
+      expect(result.letter).toBe("B");
+      expect(result.accidental).toBe(0);
+    });
+  });
+});
+
+// ============================================================================
+// transposeChords - transpose all chords in a progression
+// ============================================================================
+
+describe("transposeChords", () => {
+  describe("basic transposition", () => {
+    test("single chord up a semitone", () => {
+      const chords: ChordSpec[] = [{ root: Note.C, quality: "maj" }];
+      const result = transposeChords(chords, 1, "sharps");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].root.letter).toBe("C");
+      expect(result[0].root.accidental).toBe(1);
+      expect(result[0].quality).toBe("maj");
+    });
+
+    test("progression up a perfect fifth", () => {
+      const chords: ChordSpec[] = [
+        { root: Note.C, quality: "maj" },
+        { root: Note.F, quality: "maj" },
+        { root: Note.G, quality: "7" },
+      ];
+      const result = transposeChords(chords, 7);
+
+      expect(result[0].root.letter).toBe("G");
+      expect(result[1].root.letter).toBe("C");
+      expect(result[2].root.letter).toBe("D");
+    });
+
+    test("progression down a minor third", () => {
+      const chords: ChordSpec[] = [
+        { root: Note.C, quality: "maj" },
+        { root: Note.A, quality: "min" },
+      ];
+      const result = transposeChords(chords, -3);
+
+      expect(result[0].root.letter).toBe("A");
+      expect(result[1].root.letter).toBe("F");
+      expect(result[1].root.accidental).toBe(1); // F#
+    });
+  });
+
+  describe("slash chords (bass notes)", () => {
+    test("transposes both root and bass", () => {
+      const chords: ChordSpec[] = [
+        { root: Note.C, quality: "maj", bass: Note.E },
+      ];
+      const result = transposeChords(chords, 2, "sharps");
+
+      expect(result[0].root.letter).toBe("D");
+      expect(result[0].root.accidental).toBe(0);
+      expect(result[0].bass?.letter).toBe("F");
+      expect(result[0].bass?.accidental).toBe(1); // F#
+    });
+
+    test("preserves undefined bass", () => {
+      const chords: ChordSpec[] = [{ root: Note.C, quality: "maj" }];
+      const result = transposeChords(chords, 5);
+
+      expect(result[0].bass).toBeUndefined();
+    });
+  });
+
+  describe("spelling strategies", () => {
+    test("sharps strategy", () => {
+      const chords: ChordSpec[] = [{ root: Note.C, quality: "min" }];
+      const result = transposeChords(chords, 1, "sharps");
+
+      expect(result[0].root.letter).toBe("C");
+      expect(result[0].root.accidental).toBe(1);
+    });
+
+    test("flats strategy", () => {
+      const chords: ChordSpec[] = [{ root: Note.C, quality: "min" }];
+      const result = transposeChords(chords, 1, "flats");
+
+      expect(result[0].root.letter).toBe("D");
+      expect(result[0].root.accidental).toBe(-1);
+    });
+  });
+
+  describe("preserves other chord properties", () => {
+    test("quality preserved", () => {
+      const chords: ChordSpec[] = [
+        { root: Note.C, quality: "maj7" },
+        { root: Note.D, quality: "min7" },
+        { root: Note.G, quality: "7" },
+      ];
+      const result = transposeChords(chords, 5);
+
+      expect(result[0].quality).toBe("maj7");
+      expect(result[1].quality).toBe("min7");
+      expect(result[2].quality).toBe("7");
+    });
+  });
+
+  describe("edge cases", () => {
+    test("empty array returns empty array", () => {
+      const result = transposeChords([], 5);
+      expect(result).toEqual([]);
+    });
+
+    test("zero transposition returns same notes", () => {
+      const chords: ChordSpec[] = [{ root: Note.F_SHARP, quality: "maj" }];
+      const result = transposeChords(chords, 0);
+
+      expect(result[0].root.letter).toBe("F");
+      expect(result[0].root.accidental).toBe(1);
+    });
+
+    test("12 semitone transposition returns same pitch classes", () => {
+      const chords: ChordSpec[] = [
+        { root: Note.C, quality: "maj" },
+        { root: Note.G, quality: "7" },
+      ];
+      const result = transposeChords(chords, 12);
+
+      expect(result[0].root.letter).toBe("C");
+      expect(result[0].root.accidental).toBe(0);
+      expect(result[1].root.letter).toBe("G");
+      expect(result[1].root.accidental).toBe(0);
     });
   });
 });
