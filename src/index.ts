@@ -69,7 +69,6 @@ export {
   VoiceAnalysisSchema,
   MidiChordSchema,
   PerformanceChordSchema,
-  PerformanceOutputSchema,
   VoicingTypeSchema,
   TonePriorityDegreeSchema,
   BassStrategySchema,

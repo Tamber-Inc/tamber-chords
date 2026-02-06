@@ -198,8 +198,7 @@ export const PerformanceChordSchema = z.object({
 });
 export type PerformanceChord = z.infer<typeof PerformanceChordSchema>;
 
-export const PerformanceOutputSchema = PerformanceChordSchema;
-export type PerformanceOutput = z.infer<typeof PerformanceOutputSchema>;
+export type PerformanceOutput = PerformanceChord;
 
 export const VoicingTypeSchema = z.enum(["close", "drop2", "drop3"]);
 export type VoicingType = z.infer<typeof VoicingTypeSchema>;
