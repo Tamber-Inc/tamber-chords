@@ -26,6 +26,7 @@
   "devDependencies": {
     "@jazzer.js/core": "^2.1.0",
     "@types/bun": "latest",
+    "@types/minimatch": "5.1.2",
     "typescript": "^5"
   },
   "trustedDependencies": [
