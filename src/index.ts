@@ -23,6 +23,9 @@ export {
   transposeChords,
 } from "./renderMidi";
 
+// Chord progression rendering
+export { renderChordProgression } from "./renderProgression";
+
 export type { Result } from "./buildChord";
 
 // Core primitives
@@ -76,6 +79,12 @@ export {
   RenderOptionsSchema,
   VoiceLeadOptionsSchema,
   PerformanceOptionsSchema,
+  // Chord progression rendering
+  ChordEventSchema,
+  ActivationSchema,
+  ClipNoteSchema,
+  RenderProgressionInputSchema,
+  RenderProgressionOutputSchema,
   // Result helpers
   createResultSchema,
   ChordResultSchema,
@@ -114,6 +123,11 @@ export type {
   RenderOptions,
   VoiceLeadOptions,
   PerformanceOptions,
+  ChordEvent,
+  Activation,
+  ClipNote,
+  RenderProgressionInput,
+  RenderProgressionOutput,
   ChordResult,
   VoidResult,
 } from "./schemas";
