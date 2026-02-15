@@ -26,6 +26,12 @@ export {
 // Chord progression rendering
 export { renderChordProgression } from "./renderProgression";
 
+// Melodic line rendering
+export { parseNoteString } from "./parseNote";
+export type { ParsedNoteString } from "./parseNote";
+export { renderMelodicLine } from "./renderMelody";
+export { getScalePitchClasses, isNoteInScale, SCALE_INTERVALS } from "./scales";
+
 export type { Result } from "./buildChord";
 
 // Core primitives
@@ -85,6 +91,13 @@ export {
   ClipNoteSchema,
   RenderProgressionInputSchema,
   RenderProgressionOutputSchema,
+  // Scale types
+  ScaleTypeSchema,
+  // Melodic line rendering
+  MelodicNoteEventSchema,
+  ScaleSpecSchema,
+  RenderMelodicLineInputSchema,
+  RenderMelodicLineOutputSchema,
   // Result helpers
   createResultSchema,
   ChordResultSchema,
@@ -128,6 +141,11 @@ export type {
   ClipNote,
   RenderProgressionInput,
   RenderProgressionOutput,
+  ScaleType,
+  MelodicNoteEvent,
+  ScaleSpec,
+  RenderMelodicLineInput,
+  RenderMelodicLineOutput,
   ChordResult,
   VoidResult,
 } from "./schemas";
