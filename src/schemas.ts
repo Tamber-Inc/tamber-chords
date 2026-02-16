@@ -296,6 +296,54 @@ export const RenderProgressionOutputSchema = z.object({
 });
 export type RenderProgressionOutput = z.infer<typeof RenderProgressionOutputSchema>;
 
+// ============================================================================
+// Scale Types
+// ============================================================================
+
+export const ScaleTypeSchema = z.enum([
+  "major",
+  "minor",
+  "harmonic_minor",
+  "melodic_minor",
+  "dorian",
+  "mixolydian",
+  "phrygian",
+  "lydian",
+  "locrian",
+]);
+export type ScaleType = z.infer<typeof ScaleTypeSchema>;
+
+// ============================================================================
+// Melodic Line Rendering
+// ============================================================================
+
+export const MelodicNoteEventSchema = z.object({
+  note: z.string(),
+  start_time: z.number().min(0),
+  duration: z.number().positive(),
+  velocity: z.number().int().min(1).max(127).optional(),
+});
+export type MelodicNoteEvent = z.infer<typeof MelodicNoteEventSchema>;
+
+export const ScaleSpecSchema = z.object({
+  root: NoteNameSchema,
+  type: ScaleTypeSchema,
+});
+export type ScaleSpec = z.infer<typeof ScaleSpecSchema>;
+
+export const RenderMelodicLineInputSchema = z.object({
+  notes: z.array(MelodicNoteEventSchema).min(1),
+  scale: ScaleSpecSchema.optional(),
+});
+export type RenderMelodicLineInput = z.infer<typeof RenderMelodicLineInputSchema>;
+
+export const RenderMelodicLineOutputSchema = z.object({
+  notes: z.array(ClipNoteSchema),
+  totalBeats: z.number(),
+  warnings: z.array(z.string()),
+});
+export type RenderMelodicLineOutput = z.infer<typeof RenderMelodicLineOutputSchema>;
+
 // Common result schemas
 export const ChordResultSchema = createResultSchema(ChordSchema);
 export type ChordResult = z.infer<typeof ChordResultSchema>;
