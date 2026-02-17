@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { renderChordProgression } from "./renderProgression";
 import type { ChordEvent, Activation, ChordSpec } from "./schemas";
 

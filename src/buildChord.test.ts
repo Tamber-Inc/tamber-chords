@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { buildChord, validateChordSpec, chordPalette } from "./buildChord";
 import { Note } from "./noteName";
 import type { ChordSpec, ChordQuality, Key } from "./buildChord";

@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { parseNoteString } from "./parseNote";
 
 describe("parseNoteString", () => {
