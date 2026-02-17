@@ -15,13 +15,13 @@
     "src"
   ],
   "scripts": {
-    "build": "bun run build:js && bun run build:types",
-    "build:js": "bun build ./src/index.ts --outdir ./dist --target node",
+    "build": "pnpm run build:js && pnpm run build:types",
+    "build:js": "esbuild ./src/index.ts --bundle --outdir=./dist --platform=node --format=esm",
     "build:types": "tsc -p tsconfig.build.json",
-    "build:fuzz": "bun build ./src/index.ts --outdir ./dist-fuzz --target node --format cjs",
-    "test": "bun test",
-    "prepublishOnly": "bun run build",
-    "fuzz": "bun run build:fuzz && npx jazzer fuzz/parseChord.fuzz.cjs && npx jazzer fuzz/buildChord.fuzz.cjs && npx jazzer fuzz/chordPalette.fuzz.cjs"
+    "build:fuzz": "esbuild ./src/index.ts --bundle --outdir=./dist-fuzz --platform=node --format=cjs",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build",
+    "fuzz": "pnpm run build:fuzz && npx jazzer fuzz/parseChord.fuzz.cjs && npx jazzer fuzz/buildChord.fuzz.cjs && npx jazzer fuzz/chordPalette.fuzz.cjs"
   },
   "devDependencies": {
     "@jazzer.js/core": "^2.1.0",
