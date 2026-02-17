@@ -2,6 +2,7 @@
   "name": "tamber-chords",
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@10.17.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -26,11 +27,16 @@
   "devDependencies": {
     "@jazzer.js/core": "^2.1.0",
     "@types/minimatch": "5.1.2",
-    "typescript": "^5"
+    "esbuild": "^0.24.0",
+    "typescript": "^5",
+    "vitest": "^3.0.0"
   },
-  "trustedDependencies": [
-    "@jazzer.js/fuzzer"
-  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@jazzer.js/fuzzer",
+      "esbuild"
+    ]
+  },
   "dependencies": {
     "zod": "^3.25.76"
   }

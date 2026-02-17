@@ -34,18 +34,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install
 
       - name: Run tests
-        run: bun test
+        run: pnpm run test
 
       - name: Build
-        run: bun run build
+        run: pnpm run build
 
   fuzz:
     needs: [check-changes]
@@ -55,19 +58,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install
 
       - name: Build fuzz targets
-        run: bun run build:fuzz
+        run: pnpm run build:fuzz
 
       - name: Fuzz parseChord (10min)
         run: npx jazzer fuzz/parseChord.fuzz.cjs -- -seed=1 -max_total_time=600

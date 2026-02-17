@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { parseChord, formatChord } from "./parseChord";
 import { Note, ChordParseError } from "./noteName";
 import type { Accidental } from "./noteName";
