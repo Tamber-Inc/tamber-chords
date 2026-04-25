@@ -1,7 +1,7 @@
 import { test, expect, describe } from "vitest";
-import { parseChord, formatChord } from "./parseChord";
-import { Note, ChordParseError } from "./noteName";
-import type { Accidental } from "./noteName";
+import { parseChord, formatChord } from "../src/parseChord";
+import { Note, ChordParseError } from "../src/noteName";
+import type { Accidental } from "../src/noteName";
 
 // Helper to create interval maps concisely
 const I = (entries: [number, Accidental][]): Map<number, Accidental> => new Map(entries);

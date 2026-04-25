@@ -193,24 +193,33 @@ function degreeToString(degree: number): string {
 // ============================================================================
 
 function applyVoicing(voices: number[], voicing: VoicingType): number[] {
-  if (voices.length < 4 || voicing === "close") {
+  if (voices.length < 3) {
     return voices;
   }
 
   const sorted = [...voices].sort((a, b) => a - b);
 
-  if (voicing === "drop2") {
+  if (voicing === "drop2" && sorted.length >= 4) {
     // Drop the second-highest voice down an octave
     const secondHighestIdx = sorted.length - 2;
     sorted[secondHighestIdx] = sorted[secondHighestIdx]! - 12;
     return sorted.sort((a, b) => a - b);
   }
 
-  if (voicing === "drop3") {
+  if (voicing === "drop3" && sorted.length >= 4) {
     // Drop the third-highest voice down an octave
     const thirdHighestIdx = sorted.length - 3;
     sorted[thirdHighestIdx] = sorted[thirdHighestIdx]! - 12;
     return sorted.sort((a, b) => a - b);
+  }
+
+  if (voicing === "open") {
+    // Spread voices across a wider range (octave displacement)
+    // For 3+ voices: [v0, v1+12, v2+12, v3+24, ...] or similar
+    // Simple approach: move every other voice up an octave
+    return sorted
+      .map((v, i) => (i % 2 === 1 ? v + 12 : v))
+      .sort((a, b) => a - b);
   }
 
   return voices;
@@ -529,7 +538,15 @@ export function voiceLead(
     );
 
     // Get pitch classes for the selected tones
-    const pitchClasses = tones.map((t) => toPitchClass(t));
+    let pitchClasses = tones.map((t) => toPitchClass(t));
+
+    // Handle inversion if specified in spec
+    if (spec.inversion && spec.inversion > 0) {
+      for (let i = 0; i < spec.inversion; i++) {
+        const first = pitchClasses.shift();
+        if (first !== undefined) pitchClasses.push(first);
+      }
+    }
 
     // Determine bass
     let bass: number;
@@ -661,6 +678,11 @@ export function voiceLead(
         maxNote,
         anchorCenter ?? undefined
       );
+    }
+
+    // Apply per-chord voicing strategy if specified
+    if (spec.voicing && spec.voicing !== "close") {
+      voices = applyVoicing(voices, spec.voicing);
     }
 
     const analysis: VoiceAnalysis = {};

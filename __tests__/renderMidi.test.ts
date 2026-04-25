@@ -7,16 +7,16 @@ import {
   toPerformanceOutput,
   transposeNote,
   transposeChords,
-} from "./renderMidi";
-import { Note } from "./noteName";
-import type { ChordSpec } from "./buildChord";
+} from "../src/renderMidi";
+import { Note, N } from "../src/noteName";
+import type { ChordSpec } from "../src/buildChord";
 import type {
   MidiChord,
   MidiSpelling,
   SpellingStrategy,
   PerformanceChord,
   PerformanceOutput,
-} from "./renderMidi";
+} from "../src/renderMidi";
 
 // ============================================================================
 // noteToMidi - pitch conversion (NoteName + octave → MIDI number)
@@ -1067,5 +1067,39 @@ describe("edge cases", () => {
       expect(note).toBeGreaterThanOrEqual(0);
       expect(note).toBeLessThanOrEqual(127);
     }
+  });
+
+  describe("per-chord voicing and inversion", () => {
+    const specs: ChordSpec[] = [
+      {
+        root: N("C", 0),
+        quality: "maj7",
+        voicing: "open",
+      },
+      {
+        root: N("C", 0),
+        quality: "maj7",
+        inversion: 1, // E G B C
+      },
+    ];
+
+    test("applies open voicing", () => {
+      const results = voiceLead([specs[0]!], { baseOctave: 4 });
+      const voices = results[0]!.voices;
+      // Close voicing would be [60, 64, 67, 71] (C4 E4 G4 B4)
+      // Open voicing moves every other note up an octave: [60, 76, 67, 83] -> sorted [60, 67, 76, 83]
+      // The gap between notes should be larger than 4 semitones (E-C)
+      const maxGap = Math.max(...voices.slice(1).map((v, i) => v - voices[i]!));
+      expect(maxGap).toBeGreaterThan(7); // Perfect 5th or more
+    });
+
+    test("applies inversion", () => {
+      const results = voiceLead([specs[1]!], { baseOctave: 4 });
+      const voices = results[0]!.voices;
+      // Inversion 1 of Cmaj7 (C E G B) -> (E G B C)
+      // Pitch classes: 4, 7, 11, 0
+      const pcs = voices.map((v) => v % 12).sort((a, b) => a - b);
+      expect(pcs).toEqual([0, 4, 7, 11]);
+    });
   });
 });

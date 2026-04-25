@@ -1,7 +1,7 @@
 import { test, expect, describe } from "vitest";
-import { buildChord, validateChordSpec, chordPalette } from "./buildChord";
-import { Note } from "./noteName";
-import type { ChordSpec, ChordQuality, Key } from "./buildChord";
+import { buildChord, validateChordSpec, chordPalette } from "../src/buildChord";
+import { Note } from "../src/noteName";
+import type { ChordSpec, ChordQuality, Key } from "../src/buildChord";
 
 describe("buildChord", () => {
   describe("major triads", () => {

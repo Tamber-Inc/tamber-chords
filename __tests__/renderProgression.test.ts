@@ -1,6 +1,6 @@
 import { test, expect, describe } from "vitest";
-import { renderChordProgression } from "./renderProgression";
-import type { ChordEvent, Activation, ChordSpec } from "./schemas";
+import { renderChordProgression } from "../src/renderProgression";
+import type { ChordEvent, Activation, ChordSpec } from "../src/schemas";
 
 // Helpers for concise chord specs
 const chord = (

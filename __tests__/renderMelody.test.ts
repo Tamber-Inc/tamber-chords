@@ -1,6 +1,6 @@
 import { test, expect, describe } from "vitest";
-import { renderMelodicLine } from "./renderMelody";
-import { N } from "./noteName";
+import { renderMelodicLine } from "../src/renderMelody";
+import { N } from "../src/noteName";
 
 describe("renderMelodicLine", () => {
   test("converts note strings to MIDI pitches", () => {

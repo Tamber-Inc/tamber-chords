@@ -96,6 +96,8 @@ export const ChordSpecSchema = z.object({
   tensions: z.array(TensionSchema).optional(),
   omit: z.array(OmitDegreeSchema).optional(),
   bass: NoteNameSchema.optional(),
+  voicing: VoicingTypeSchema.optional(),
+  inversion: z.number().int().min(0).max(3).optional(),
 });
 export type ChordSpec = z.infer<typeof ChordSpecSchema>;
 
@@ -201,7 +203,7 @@ export type PerformanceChord = z.infer<typeof PerformanceChordSchema>;
 export const PerformanceOutputSchema = PerformanceChordSchema;
 export type PerformanceOutput = z.infer<typeof PerformanceOutputSchema>;
 
-export const VoicingTypeSchema = z.enum(["close", "drop2", "drop3"]);
+export const VoicingTypeSchema = z.enum(["close", "drop2", "drop3", "open"]);
 export type VoicingType = z.infer<typeof VoicingTypeSchema>;
 
 export const TonePriorityDegreeSchema = z.enum([

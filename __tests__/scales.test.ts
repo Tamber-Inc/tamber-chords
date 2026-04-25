@@ -1,6 +1,6 @@
 import { test, expect, describe } from "vitest";
-import { getScalePitchClasses, isNoteInScale } from "./scales";
-import { N } from "./noteName";
+import { getScalePitchClasses, isNoteInScale } from "../src/scales";
+import { N } from "../src/noteName";
 
 describe("getScalePitchClasses", () => {
   test("C major = {0,2,4,5,7,9,11}", () => {

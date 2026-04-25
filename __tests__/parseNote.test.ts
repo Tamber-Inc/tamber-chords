@@ -1,5 +1,5 @@
 import { test, expect, describe } from "vitest";
-import { parseNoteString } from "./parseNote";
+import { parseNoteString } from "../src/parseNote";
 
 describe("parseNoteString", () => {
   test("parses natural notes", () => {
