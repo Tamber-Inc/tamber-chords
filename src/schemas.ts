@@ -86,6 +86,9 @@ export type Tension = z.infer<typeof TensionSchema>;
 export const OmitDegreeSchema = z.enum(["3", "5"]);
 export type OmitDegree = z.infer<typeof OmitDegreeSchema>;
 
+
+export const VoicingTypeSchema = z.enum(["close", "drop2", "drop3", "open"]);
+export type VoicingType = z.infer<typeof VoicingTypeSchema>;
 // ============================================================================
 // Chord Specifications
 // ============================================================================
@@ -203,8 +206,6 @@ export type PerformanceChord = z.infer<typeof PerformanceChordSchema>;
 export const PerformanceOutputSchema = PerformanceChordSchema;
 export type PerformanceOutput = z.infer<typeof PerformanceOutputSchema>;
 
-export const VoicingTypeSchema = z.enum(["close", "drop2", "drop3", "open"]);
-export type VoicingType = z.infer<typeof VoicingTypeSchema>;
 
 export const TonePriorityDegreeSchema = z.enum([
   "root",
