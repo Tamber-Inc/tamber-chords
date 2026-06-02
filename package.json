@@ -21,11 +21,9 @@
     "build:types": "tsc -p tsconfig.build.json",
     "build:fuzz": "esbuild ./src/index.ts --bundle --outdir=./dist-fuzz --platform=node --format=cjs",
     "test": "vitest run",
-    "prepublishOnly": "pnpm run build",
-    "fuzz": "pnpm run build:fuzz && npx jazzer fuzz/parseChord.fuzz.cjs && npx jazzer fuzz/buildChord.fuzz.cjs && npx jazzer fuzz/chordPalette.fuzz.cjs"
+    "prepublishOnly": "pnpm run build"
   },
   "devDependencies": {
-    "@jazzer.js/core": "^2.1.0",
     "@types/minimatch": "5.1.2",
     "esbuild": "^0.24.0",
     "typescript": "^5",
@@ -33,7 +31,6 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "@jazzer.js/fuzzer",
       "esbuild"
     ]
   },
