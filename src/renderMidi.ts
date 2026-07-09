@@ -15,7 +15,6 @@ import type {
   PerformanceOutput,
   VoicingType,
   TonePriorityDegree,
-  BassStrategy,
   RenderOptions,
   VoiceLeadOptions,
   PerformanceOptions,

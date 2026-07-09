@@ -1,7 +1,5 @@
 import { voiceLead } from "./renderMidi";
 import type {
-  ChordEvent,
-  Activation,
   ClipNote,
   RenderProgressionInput,
   RenderProgressionOutput,
