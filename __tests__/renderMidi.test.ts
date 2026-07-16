@@ -848,6 +848,23 @@ describe("voiceLead", () => {
       expect(pitchClasses).not.toContain(7); // G (5th) omitted
     });
 
+    test("default: keeps defining upper extensions", () => {
+      const eleventh = voiceLead(
+        [{ root: Note.C, quality: "11" }],
+        { baseOctave: 4, maxVoices: 4 }
+      );
+      const thirteenth = voiceLead(
+        [{ root: Note.C, quality: "13" }],
+        { baseOctave: 4, maxVoices: 4 }
+      );
+
+      const eleventhPitchClasses = eleventh[0].voices.map((n) => n % 12);
+      const thirteenthPitchClasses = thirteenth[0].voices.map((n) => n % 12);
+      expect(eleventhPitchClasses).toContain(5); // F (11th)
+      expect(thirteenthPitchClasses).toContain(9); // A (13th)
+      expect(thirteenthPitchClasses).not.toContain(2); // D (9th) omitted first
+    });
+
     test("custom: root + 5th (power chord)", () => {
       const result = voiceLead(
         [{ root: Note.C, quality: "maj7" }],

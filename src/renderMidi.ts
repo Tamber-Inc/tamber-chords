@@ -77,7 +77,7 @@ const FLAT_SPELLINGS: NoteName[] = [
 
 // Default priority for tone selection when we have more/fewer voices than tones
 const DEFAULT_TONE_PRIORITY: TonePriorityDegree[] = [
-  "root", "3", "7", "9", "11", "13", "5",
+  "root", "3", "7", "13", "11", "9", "5",
 ];
 
 // Degree string to interval degree number

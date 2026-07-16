@@ -26,6 +26,26 @@ export {
 // Chord progression rendering
 export { renderChordProgression } from "./renderProgression";
 
+// Compass — genre-weighted chord recommendation for the Gestures zones
+export {
+  recommendCompassChords,
+  COMPASS_GENRES,
+  COMPASS_PROFILES,
+} from "./compass";
+export type {
+  CompassCandidate,
+  CompassFeatureId,
+  CompassFeatureScores,
+  CompassFeatureWeights,
+  CompassGenre,
+  CompassGenreProfile,
+  CompassQualityTable,
+  CompassRecommendation,
+  CompassRequest,
+  CompassZoneInput,
+  CompassZonePlaybackMode,
+} from "./compass";
+
 // Melodic line rendering
 export { parseNoteString } from "./parseNote";
 export type { ParsedNoteString } from "./parseNote";
